@@ -1,0 +1,208 @@
+import java.util.*;
+
+/*
+ ============================================================================
+  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
+  ASSIGNMENT 2: FRACTIONAL KNAPSACK PROBLEM (GREEDY STRATEGY)
+ ============================================================================
+
+ PROBLEM STATEMENT:
+ Given weights and profits of n items, put these items in a knapsack of capacity 
+ W to get the maximum total value in the knapsack. In Fractional Knapsack, we can 
+ break items for maximizing the total value of the knapsack.
+
+ ALGORITHMIC STRATEGY: GREEDY METHOD
+ - Calculate profit-to-weight ratio (profit / weight) for each item.
+ - Sort all items in descending order of their profit-to-weight ratio.
+ - Greedily pick items with the highest ratio first:
+     * If the whole item fits within remaining capacity, take it entirely.
+     * If the item cannot fit completely, take a fraction equal to:
+       (remaining_capacity / item.weight) * item.profit
+ ============================================================================
+*/
+
+// Representation of an item with weight and profit
+class Item {
+    int weight; // Weight of the item
+    int profit; // Value / Profit of the item
+
+    // Parameterized constructor
+    Item(int weight, int profit) {
+        this.weight = weight;
+        this.profit = profit;
+    }
+}
+
+public class FractionalKnapsack {
+
+    public static void main(String[] args) {
+
+        // Sample input: Set of items with (weight, profit)
+        Item[] items = {
+            new Item(10, 60),  // Ratio: 60/10 = 6.0
+            new Item(20, 100), // Ratio: 100/20 = 5.0
+            new Item(30, 120)  // Ratio: 120/30 = 4.0
+        };
+
+        int capacity = 50; // Total capacity of the knapsack (W)
+
+        /*
+         * GREEDY SORTING STEP:
+         * Sort items in descending order of profit/weight ratio.
+         * Formula: ratio = (double) profit / weight
+         * 
+         * Time Complexity of Sorting: O(n log n) using TimSort / Dual-Pivot Quicksort
+         */
+        Arrays.sort(items, (a, b) ->
+            Double.compare(
+                (double) b.profit / b.weight, // Item b ratio
+                (double) a.profit / a.weight  // Item a ratio (descending order)
+            )
+        );
+
+        double totalProfit = 0.0; // Accumulator for maximum achievable profit
+
+        // GREEDY SELECTION STEP: Iterate through sorted items
+        for (Item item : items) {
+
+            // If knapsack is completely full, stop
+            if (capacity == 0)
+                break;
+
+            // CASE 1: The current item can fit entirely in the knapsack
+            if (item.weight <= capacity) {
+                capacity -= item.weight;      // Reduce remaining capacity
+                totalProfit += item.profit;    // Add full profit of item
+                System.out.println("Picked 100% of item (Weight: " + item.weight 
+                                   + ", Profit: " + item.profit + ")");
+            } 
+            // CASE 2: The current item cannot fit completely; take fractional part
+            else {
+                // Fraction = remaining capacity / item weight
+                double fraction = (double) capacity / item.weight;
+                totalProfit += ((double) item.profit / item.weight) * capacity;
+
+                System.out.println("Picked " + (fraction * 100) + "% of item (Weight: " 
+                                   + item.weight + ", Profit: " + item.profit + ")");
+
+                capacity = 0; // Knapsack is now fully packed
+            }
+        }
+
+        System.out.println("\nMaximum Profit in Knapsack: " + totalProfit);
+    }
+}
+
+/*
+ ============================================================================
+                         THEORY & ARCHITECTURE
+ ============================================================================
+
+ 1. WHAT IS THE GREEDY METHOD?
+    The greedy approach builds up a solution piece by piece, always choosing 
+    the next piece that offers the most immediate (local) benefit without 
+    worrying about future consequences.
+    For Fractional Knapsack, the local optimal choice is the item offering 
+    the maximum profit per unit weight (p_i / w_i).
+
+ 2. TWO ESSENTIAL PROPERTIES OF GREEDY ALGORITHMS:
+    a) Greedy Choice Property: A globally optimal solution can be arrived at by 
+       making locally optimal choices.
+    b) Optimal Substructure: An optimal solution to the problem contains within 
+       it optimal solutions to subproblems.
+
+ 3. COMPLEXITY ANALYSIS:
+    - Sorting Step: O(n log n), where n is the number of items.
+    - Greedy Loop:  O(n), scanning each item at most once.
+    - Total Time Complexity: O(n log n) - dominated by sorting.
+    - Auxiliary Space Complexity: O(1) beyond the input array storage.
+    - Can we achieve O(n) Time?
+      YES! Using the Median-of-Medians (QuickSelect) selection algorithm, we can 
+      find the pivot item that fills the knapsack without sorting the entire array, 
+      achieving linear O(n) average/worst-case time.
+
+ 4. WHY DOES GREEDY WORK FOR FRACTIONAL BUT FAIL FOR 0/1 KNAPSACK?
+    - In Fractional Knapsack, because items can be subdivided, taking the item 
+      with the highest unit value is always optimal.
+    - In 0/1 Knapsack, items cannot be broken. A high-ratio item might leave 
+      empty, wasted space that could have been filled with a combination of 
+      other items yielding higher total profit.
+      Counter-example for 0/1:
+      Capacity = 50. Items: (wt=10, val=60, ratio=6), (wt=20, val=100, ratio=5), 
+                            (wt=30, val=120, ratio=4).
+      Greedy picks: wt 10 (val 60) + wt 20 (val 100) -> total weight 30, val 160.
+      Remaining capacity 20 cannot fit item 3 (wt 30).
+      Optimal 0/1 choice: wt 20 (100) + wt 30 (120) = total weight 50, profit 220!
+
+ ============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+ ============================================================================
+
+ Q1: What is the Fractional Knapsack problem?
+ A1: It is an optimization problem where given a set of items, each with a weight 
+     and value, we need to fill a knapsack of capacity W to achieve maximum total 
+     value, with the allowance to take fractions of items.
+
+ Q2: Which algorithmic design paradigm is used to solve this problem?
+ A2: The Greedy Method (specifically choosing items by highest value-to-weight ratio).
+
+ Q3: What is the time complexity of the Fractional Knapsack algorithm?
+ A3: O(n log n), because sorting n items by ratio takes O(n log n) time, and the 
+     linear scan takes O(n) time.
+
+ Q4: Can Fractional Knapsack be solved in O(n) linear time?
+ A4: Yes. By using the Quickselect (Median-of-Medians) algorithm, we can partition 
+     items around the median ratio in O(n) time without a full sort, taking items 
+     until the capacity is reached.
+
+ Q5: What is the Greedy Choice Property in Fractional Knapsack?
+ A5: Selecting the item with the highest profit-per-unit-weight (p/w) ratio at each 
+     step leads to a globally optimal solution.
+
+ Q6: What happens if two items have the same profit-to-weight ratio?
+ A6: The algorithm can pick either item first. The total profit remains the same 
+     because both items contribute identical value per unit of weight.
+
+ Q7: Why does the Greedy strategy fail for the 0/1 Knapsack problem?
+ A7: Because items cannot be divided. Picking an item with high density might leave 
+     unusable empty capacity (slack capacity), whereas lower density items could 
+     pack together to produce a larger total value.
+
+ Q8: What is the difference between Fractional Knapsack and 0/1 Knapsack?
+ A8: - Fractional Knapsack: Items can be divided into fractions; solved via Greedy; 
+       Time Complexity: O(n log n).
+     - 0/1 Knapsack: Items must be taken as a whole or left; solved via Dynamic 
+       Programming or Branch & Bound; Time Complexity: O(n * W).
+
+ Q9: What data structure can be used to avoid sorting the entire array upfront?
+ A9: A Max-Heap (PriorityQueue). Building the heap takes O(n), and extracting the 
+     maximum ratio item takes O(log n). If k items fill the knapsack, time is 
+     O(n + k log n), which is faster when k << n.
+
+ Q10: What is the significance of `Double.compare(b.ratio, a.ratio)` in the code?
+ A10: It avoids integer truncation and floating-point subtraction underflow bugs. 
+      It sorts in descending order (item b compared against item a).
+
+ Q11: How is the fraction of an item calculated?
+ A11: Fraction = (Remaining Capacity) / (Total Weight of the Item).
+      Profit added = Fraction * Total Profit of the Item.
+
+ Q12: What is the space complexity of this program?
+ A12: O(1) auxiliary space (if in-place sorting is used) or O(n) for storing items 
+      in the array.
+
+ Q13: What are real-world applications of Fractional Knapsack?
+ A13: - Liquid/grain cargo shipment loading.
+      - Resource allocation and bandwidth management in telecommunication.
+      - Financial portfolio diversification (fractional shares investment).
+      - Budget allocation across competing tasks with divisible returns.
+
+ Q14: Is Fractional Knapsack an NP-Hard or P problem?
+ A14: Fractional Knapsack is in class P (Polynomial Time, solvable in O(n log n) or O(n)).
+      In contrast, 0/1 Knapsack is NP-Complete (weakly NP-hard).
+
+ Q15: What is the mathematical formulation of Fractional Knapsack?
+ A15: Maximize Sum(x_i * p_i) subject to Sum(x_i * w_i) <= W, 
+      where 0 <= x_i <= 1 for all i in {1, 2, ..., n}.
+ ============================================================================
+*/

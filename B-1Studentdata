@@ -1,0 +1,229 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/*
+ ============================================================================
+  LAB PRACTICE III (LP-3) - BLOCKCHAIN TECHNOLOGY
+  ASSIGNMENT 6 (B-1): STUDENT DATA MANAGEMENT SMART CONTRACT
+ ============================================================================
+
+ PROBLEM STATEMENT:
+ Write a smart contract on Ethereum using Solidity to manage Student data. 
+ Implement capabilities to add new student records, fetch student details by 
+ index, retrieve total student count, and handle unexpected ether transactions 
+ via fallback functions.
+
+ CORE CONCEPTS:
+ - Ethereum Virtual Machine (EVM) execution environment.
+ - Solidity Data Structures: `struct` (custom composite types) and dynamic arrays.
+ - Data Location Keywords: `storage`, `memory`, `calldata`.
+ - Function Modifiers & State Mutability: `view`, `pure`, `payable`.
+ - Special Functions: `fallback()` and `receive()`.
+ ============================================================================
+*/
+
+contract Student {
+
+    // Custom data structure to encapsulate student profile attributes
+    struct StudentData {
+        uint id;          // Unique Student Roll Number / Identifier (256-bit unsigned integer)
+        string name;      // Full Name of the student (stored as UTF-8 string)
+        uint marks;       // Marks or assessment score secured by student
+    }
+
+    /*
+     * Dynamic Array of Structs stored in STATE STORAGE:
+     * - `public` keyword automatically generates a getter function:
+     *   students(uint256 index) returns (uint256 id, string memory name, uint256 marks)
+     * - Persists permanently on the Ethereum global distributed ledger.
+     */
+    StudentData[] public students;
+
+    /**
+     * @notice Registers a new student and stores their details on the blockchain.
+     * @dev Modifies blockchain state (Costs GAS!).
+     * 
+     * @param id Student roll number
+     * @param name Student name (Data location must be 'memory' for dynamic reference types)
+     * @param marks Student score
+     */
+    function addStudent(
+        uint id,
+        string memory name,
+        uint marks
+    ) public {
+        // Creates a new StudentData struct instance and appends it to storage array
+        students.push(StudentData(id, name, marks));
+    }
+
+    /**
+     * @notice Retrieves the student record stored at a specific array index.
+     * @dev `view` function: Reads blockchain state without altering it (FREE when called off-chain).
+     * 
+     * @param index Zero-based index position in the students array
+     * @return id Student ID
+     * @return name Student Name (returned from memory)
+     * @return marks Student Marks
+     */
+    function getStudent(uint index)
+        public view returns (uint, string memory, uint) {
+
+        // Validate that index is within valid bounds to avoid out-of-bounds error
+        require(index < students.length, "Error: Index out of bounds");
+
+        // Copy struct from permanent storage into temporary execution memory
+        StudentData memory s = students[index];
+
+        return (s.id, s.name, s.marks);
+    }
+
+    /**
+     * @notice Returns the total count of registered students.
+     * @dev `view` function reading array length property.
+     * @return uint Total number of student records
+     */
+    function totalStudents() public view returns (uint) {
+        return students.length;
+    }
+
+    /**
+     * @notice Fallback function executed when:
+     *  1. An external account sends Ether with data, OR
+     *  2. A call is made with a function signature that does not exist in the contract.
+     * 
+     * Marked `external` to only allow incoming external calls.
+     * Marked `payable` to accept incoming Ether payments.
+     */
+    fallback() external payable {
+        // Fallback logic / event logging can be placed here
+    }
+
+    /**
+     * @notice Receive function specifically called when plain Ether is sent with empty calldata.
+     */
+    receive() external payable {
+        // Accepts plain Ether transfers
+    }
+}
+
+/*
+ ============================================================================
+                         THEORY & ARCHITECTURE
+ ============================================================================
+
+ 1. WHAT IS A SMART CONTRACT?
+    A smart contract is a self-executing program stored on a decentralized 
+    blockchain network (such as Ethereum). Once deployed, its code is immutable, 
+    tamper-proof, and executes deterministically across all validating nodes 
+    via the Ethereum Virtual Machine (EVM).
+
+ 2. DATA LOCATIONS IN SOLIDITY:
+    - `storage`: Persistent data stored directly on the blockchain state trie. 
+      Expensive in terms of gas. State variables default to storage.
+    - `memory`: Temporary data available only during function execution lifecycle. 
+      Cleared when the function exits. Much cheaper gas cost.
+    - `calldata`: Non-modifiable, non-allocatable read-only byte area where 
+      function arguments are passed from transaction payloads. Lowest gas.
+
+ 3. FUNCTION VISIBILITY TYPES:
+    - `public`: Accessible internally within contract and externally via transactions.
+    - `external`: Can ONLY be invoked from outside the contract (cannot be called 
+      internally without this.f()). More gas-efficient for large calldata arrays.
+    - `internal`: Accessible only inside this contract and derived (inherited) contracts.
+    - `private`: Accessible strictly within the defining contract (not even inherited).
+
+ 4. STATE MUTABILITY:
+    - `view`: Function reads state variables but does NOT write/modify state.
+    - `pure`: Function does NOT read NOR modify any state variables (computes strictly from inputs).
+    - `payable`: Function is capable of receiving Ether along with the invocation call.
+    - Non-payable: Reverts transaction if msg.value > 0 is attached.
+
+ 5. FALLBACK() VS RECEIVE():
+           Ether sent to contract
+                     |
+            Is msg.data empty?
+                /          \
+              Yes           No
+              /               \
+     receive() exists?      fallback()
+          /        \
+        Yes         No
+        /             \
+    receive()       fallback()
+
+ ============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+ ============================================================================
+
+ Q1: What is Ethereum and how does it differ from Bitcoin?
+ A1: Bitcoin is primarily a decentralized peer-to-peer digital currency ledger. 
+     Ethereum is a programmable, Turing-complete decentralized world computer 
+     that supports executing complex decentralized applications (DApps) and Smart 
+     Contracts on the Ethereum Virtual Machine (EVM).
+
+ Q2: What is Solidity?
+ A2: Solidity is a statically-typed, contract-oriented high-level programming 
+     language designed specifically for implementing smart contracts on the EVM.
+
+ Q3: What is the significance of `pragma solidity ^0.8.20;`?
+ A3: It is a compiler directive instructing the compiler that this code should be 
+     compiled using Solidity version 0.8.20 or any compatible newer version up to 
+     0.9.0 (caret `^` prevents breaking syntax changes).
+
+ Q4: What is the purpose of the `SPDX-License-Identifier`?
+ A4: It declares the open-source machine-readable license (e.g., MIT, GPL-3.0) 
+     for trust, verification, and compliance on blockchain explorers like Etherscan.
+
+ Q5: Why is `string memory name` required instead of just `string name`?
+ A5: In Solidity, complex reference types (arrays, structs, strings, bytes) require 
+     an explicit data location (`memory`, `storage`, or `calldata`) to specify whether 
+     the variable resides in permanent blockchain state or temporary RAM during execution.
+
+ Q6: What is Gas and why is it required in Ethereum?
+ A6: Gas is the execution fee measured in computational units required to run 
+     transactions and smart contracts on the EVM. It compensates miners/validators 
+     for computation and storage, and prevents infinite loops (Denial of Service attacks).
+
+ Q7: Why is `getStudent()` free to execute, but `addStudent()` costs gas?
+ A7: `getStudent()` is marked `view`; when called by an off-chain client, it only 
+     reads local node data without altering blockchain state (no consensus needed). 
+     `addStudent()` alters blockchain storage by appending to the array, requiring 
+     miners/validators to execute the transaction and alter the state trie.
+
+ Q8: What happens if an invalid index is passed to `getStudent()`?
+ A8: Without a check, the EVM throws a panic error (0x32: array out-of-bounds) and 
+     reverts the transaction, refunding remaining gas. Our `require()` provides a 
+     clean revert message.
+
+ Q9: What is the difference between `fallback()` and `receive()`?
+ A9: `receive()` is executed when plain Ether is sent with empty calldata. 
+     `fallback()` is executed when no function signature matches the call data, 
+     or when Ether is sent with data and no matching function exists.
+
+ Q10: What is a `struct` in Solidity?
+ A10: A user-defined data type that groups related variables of different types 
+      (like id, name, marks) under a single custom structure.
+
+ Q11: What is the default access modifier of state variables if none is specified?
+ A11: `internal` by default.
+
+ Q12: How does Solidity handle integer overflow and underflow in version 0.8.x?
+ A12: Since Solidity 0.8.0, arithmetic operations have built-in automated overflow 
+      and underflow checks that automatically revert the transaction. Prior to 0.8.0, 
+      developers had to use OpenZeppelin's `SafeMath` library.
+
+ Q13: What is the difference between `memory` and `storage`?
+ A13: - `storage`: Permanent, lives across transactions on the blockchain, very high gas cost.
+      - `memory`: Temporary, erased as soon as function execution terminates, low gas cost.
+
+ Q14: What is the difference between `view` and `pure` functions?
+ A14: - `view`: Reads contract state variables but does not modify them.
+      - `pure`: Neither reads nor modifies state variables; acts solely on arguments passed.
+
+ Q15: What IDE and test networks are commonly used for Solidity development?
+ A15: - IDE: Remix IDE (browser-based), Visual Studio Code (Hardhat/Foundry plugins).
+      - Local Testbeds: Ganache, Hardhat Network, Anvil (Foundry).
+      - Testnets: Sepolia, Holesky.
+      - Wallet: MetaMask.
+ ============================================================================
+*/

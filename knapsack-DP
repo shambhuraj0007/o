@@ -1,0 +1,210 @@
+/*
+ ============================================================================
+  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
+  ASSIGNMENT 3: 0/1 KNAPSACK PROBLEM (DYNAMIC PROGRAMMING)
+ ============================================================================
+
+ PROBLEM STATEMENT:
+ Given n items with weights and profits, and a knapsack of capacity W, determine 
+ the maximum profit subset of items such that the sum of their weights does not 
+ exceed W. Each item can either be taken once (1) or left behind (0). Fractional 
+ parts are NOT allowed.
+
+ ALGORITHMIC STRATEGY: DYNAMIC PROGRAMMING (BOTTOM-UP TABULATION)
+ - Build a 2D table dp[n + 1][capacity + 1].
+ - dp[i][w] represents the maximum profit obtainable considering the first i items 
+   with maximum allowable knapsack capacity w.
+ - Recurrence Relation:
+     If weight[i - 1] <= w:
+         dp[i][w] = max(profit[i - 1] + dp[i - 1][w - weight[i - 1]], dp[i - 1][w])
+     Else:
+         dp[i][w] = dp[i - 1][w]
+ ============================================================================
+*/
+
+public class Knapsack {
+
+    public static void main(String[] args) {
+
+        // Item weights and profits
+        int[] weight = {10, 20, 30};
+        int[] profit = {60, 100, 120};
+
+        int capacity = 50;           // Maximum capacity of Knapsack (W)
+        int n = weight.length;       // Total number of items
+
+        /*
+         * DP Table Definition:
+         * dp[i][w] = Maximum profit considering first i items with knapsack capacity w.
+         * Dimensions: (n + 1) rows and (capacity + 1) columns.
+         * Row 0: Represents 0 items available (Profit = 0).
+         * Col 0: Represents knapsack with 0 capacity (Profit = 0).
+         */
+        int[][] dp = new int[n + 1][capacity + 1];
+
+        // Fill the DP table using Bottom-Up Tabulation
+        for (int i = 1; i <= n; i++) {
+
+            for (int w = 1; w <= capacity; w++) {
+
+                // Check if current item's weight fits within current capacity w
+                if (weight[i - 1] <= w) {
+
+                    /*
+                     * DECISION:
+                     * Option 1 (Include Item):
+                     *   profit[i - 1] + dp[i - 1][w - weight[i - 1]]
+                     * Option 2 (Exclude Item):
+                     *   dp[i - 1][w]
+                     * Choose maximum of both options.
+                     */
+                    dp[i][w] = Math.max(
+                        profit[i - 1] + dp[i - 1][w - weight[i - 1]],
+                        dp[i - 1][w]
+                    );
+
+                } else {
+                    // Item weight exceeds capacity w -> Cannot include this item
+                    dp[i][w] = dp[i - 1][w];
+                }
+            }
+        }
+
+        // The bottom-right cell contains the maximum achievable profit
+        System.out.println("Maximum Profit: " + dp[n][capacity]);
+
+        // Traceback to find which items were selected in the optimal solution
+        System.out.print("Selected item weights: ");
+        int res = dp[n][capacity];
+        int w = capacity;
+        for (int i = n; i > 0 && res > 0; i--) {
+            // If value came from dp[i-1][w], item i was NOT included
+            if (res != dp[i - 1][w]) {
+                System.out.print(weight[i - 1] + " (Profit: " + profit[i - 1] + ") ");
+                // Deduct item's profit and weight
+                res -= profit[i - 1];
+                w -= weight[i - 1];
+            }
+        }
+        System.out.println();
+    }
+}
+
+/*
+ ============================================================================
+                         THEORY & ARCHITECTURE
+ ============================================================================
+
+ 1. DYNAMIC PROGRAMMING PRINCIPLES IN 0/1 KNAPSACK:
+    Dynamic programming is applicable when a problem has:
+    a) Optimal Substructure: An optimal solution to the knapsack problem of size W 
+       with n items contains optimal solutions to smaller subproblems (capacity w < W, 
+       items < n).
+    b) Overlapping Subproblems: A naive recursive approach computes the same 
+       knapsack sub-capacities repeatedly. DP stores intermediate states in a 
+       table, computing each state exactly once.
+
+ 2. COMPLEXITY ANALYSIS:
+    - Time Complexity: O(n * W)
+      There are (n + 1) * (W + 1) states in the table. Each state takes O(1) time 
+      to compute. Hence, total time is O(n * W).
+    - Space Complexity:
+      * 2D DP Table: O(n * W) auxiliary space.
+      * 1D Optimized Space: O(W) auxiliary space (using a 1D array filled from 
+        right to left).
+
+ 3. WHY IS O(n * W) PSEUDO-POLYNOMIAL?
+    - The input size of capacity W is represented in memory with log2(W) bits.
+    - An algorithm is purely polynomial if its running time is a polynomial in 
+      the number of bits of the input.
+    - If W = 2^k, running time is proportional to 2^k (exponential in input bits).
+    - Thus, 0/1 Knapsack is Pseudo-Polynomial: polynomial in the magnitude of 
+      W, but exponential in the length/bit-representation of W.
+
+ 4. SPACE OPTIMIZATION TO O(W):
+    Since dp[i][w] only depends on the previous row dp[i-1], we only need 
+    a single 1D array of size W + 1:
+    for (int i = 0; i < n; i++) {
+        for (int w = capacity; w >= weight[i]; w--) {
+            dp[w] = Math.max(dp[w], profit[i] + dp[w - weight[i]]);
+        }
+    }
+    Traversing backwards is mandatory so that values from the current item 
+    iteration do not overwrite values needed for subsequent computations 
+    in the same step!
+
+ ============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+ ============================================================================
+
+ Q1: What is the 0/1 Knapsack Problem?
+ A1: Given items with weights and profits, and a knapsack of maximum capacity W, 
+     maximize total profit such that total weight <= W, where each item can either 
+     be chosen completely (1) or rejected completely (0).
+
+ Q2: Why is it called "0/1"?
+ A2: Because each item is either included (1) or excluded (0). Fractional selection 
+     is strictly disallowed.
+
+ Q3: Which algorithmic paradigm is used to solve 0/1 Knapsack optimally?
+ A3: Dynamic Programming (Bottom-up Tabulation or Top-down Memoization).
+
+ Q4: What is the recurrence relation for 0/1 Knapsack?
+ A4: If w_i <= w:
+       dp[i][w] = max(profit[i-1] + dp[i-1][w - weight[i-1]], dp[i-1][w])
+     Else:
+       dp[i][w] = dp[i-1][w]
+
+ Q5: What is the time complexity of the DP solution?
+ A5: O(n * W), where n is the number of items and W is the knapsack capacity.
+
+ Q6: Why is O(n * W) considered pseudo-polynomial rather than polynomial?
+ A6: Because the running time depends on the numerical value of W, not the number 
+     of bits needed to represent W. In binary representation, size is k = log2(W). 
+     In terms of input size k, the time is O(n * 2^k), which is exponential.
+
+ Q7: What is the space complexity of the standard 2D DP solution?
+ A7: O(n * W) to store the 2D table of dimensions (n + 1) x (W + 1).
+
+ Q8: How can the space complexity be optimized to O(W)?
+ A8: Since computing row i only requires values from row i-1, we can maintain 
+     a 1D array of size W + 1 and iterate backwards from capacity down to weight[i].
+
+ Q9: Why is backward iteration required in the 1D space-optimized approach?
+ A9: Iterating backward prevents using the same item multiple times in the same step. 
+     Forward iteration would solve the "Unbounded Knapsack" problem instead.
+
+ Q10: How do you identify which specific items were selected?
+ A10: Start from dp[n][W]. Compare dp[i][w] with dp[i-1][w]. If they differ, item i 
+      was included; subtract weight[i-1] and profit[i-1] and move to dp[i-1][w - weight[i-1]]. 
+      If equal, move to dp[i-1][w].
+
+ Q11: What is the computational complexity class of 0/1 Knapsack?
+ A11: It is NP-Complete (weakly NP-hard). No polynomial-time algorithm is known 
+      unless P = NP.
+
+ Q12: Why does the Greedy strategy fail for 0/1 Knapsack?
+ A12: Greedy selects items based on local profit-to-weight ratio, which may leave 
+      empty capacity that cannot be filled, missing a combination of lower-density 
+      items that fully utilize capacity with higher aggregate profit.
+
+ Q13: What other approaches exist to solve 0/1 Knapsack?
+ A13: - Brute Force Recursion: O(2^n)
+      - Dynamic Programming: O(n * W)
+      - Branch and Bound (using Upper Bounds and Priority Queue): Best for large W
+      - Meet-in-the-Middle: O(2^(n/2))
+      - FPTAS (Fully Polynomial Time Approximation Scheme): (1 - epsilon) approximation.
+
+ Q14: What is the difference between 0/1 Knapsack and Unbounded Knapsack?
+ A14: In 0/1 Knapsack, each item can be selected at most once. In Unbounded Knapsack, 
+      an unlimited supply of each item is available, so recurrence becomes:
+      dp[w] = max(dp[w], profit[i] + dp[w - weight[i]]).
+
+ Q15: What are real-world applications of 0/1 Knapsack?
+ A15: - Financial budget asset allocation and investment selection
+      - Cargo truck / flight cargo container loading
+      - Cloud server virtual machine placement under CPU/RAM constraints
+      - Cryptography: Merkle-Hellman Knapsack Cryptosystem
+      - Energy management in battery-operated embedded systems.
+ ============================================================================
+*/

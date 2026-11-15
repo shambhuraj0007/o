@@ -1,0 +1,227 @@
+"""
+============================================================================
+ LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
+ ASSIGNMENT 4: BANK CUSTOMER CHURN PREDICTION USING ARTIFICIAL NEURAL NETWORK
+============================================================================
+
+PROBLEM STATEMENT:
+Given bank customer demographic and transactional records (Churn_Modelling.csv), 
+build and train an Artificial Neural Network (Multilayer Perceptron - MLPClassifier) 
+to classify whether a customer will churn/exit the bank (Exited = 1) or stay (Exited = 0).
+
+ALGORITHMIC PARADIGMS:
+- Supervised Learning - Binary Classification.
+- Deep Learning / Neural Networks: Multilayer Perceptron (MLP).
+- Optimization: Backpropagation with gradient descent optimization (Adam optimizer).
+- Non-linear Activation Functions: ReLU (hidden layers), Logistic Sigmoid (output).
+============================================================================
+"""
+
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# ----------------- Step 1: Load Dataset -----------------
+# Ensure 'Churn_Modelling.csv' is present in the working directory
+try:
+    df = pd.read_csv("Churn_Modelling.csv")
+except FileNotFoundError:
+    print("Warning: 'Churn_Modelling.csv' not found. Creating synthetic demo data...")
+    df = pd.DataFrame({
+        "RowNumber": range(1, 201),
+        "CustomerId": range(1001, 1201),
+        "Surname": ["Customer"] * 200,
+        "CreditScore": np.random.randint(500, 850, 200),
+        "Geography": np.random.choice(["France", "Germany", "Spain"], 200),
+        "Gender": np.random.choice(["Male", "Female"], 200),
+        "Age": np.random.randint(18, 70, 200),
+        "Tenure": np.random.randint(0, 10, 200),
+        "Balance": np.random.uniform(0, 150000, 200),
+        "NumOfProducts": np.random.randint(1, 4, 200),
+        "HasCrCard": np.random.choice([0, 1], 200),
+        "IsActiveMember": np.random.choice([0, 1], 200),
+        "EstimatedSalary": np.random.uniform(20000, 120000, 200),
+        "Exited": np.random.choice([0, 1], 200, p=[0.75, 0.25])
+    })
+
+# ----------------- Step 2: Feature Engineering & Preprocessing -----------------
+# Remove identifier columns that carry no predictive statistical signal
+df = df.drop(columns=["RowNumber", "CustomerId", "Surname"])
+
+# Categorical Feature Encoding:
+# Convert categorical text data into numeric representations using LabelEncoder
+le = LabelEncoder()
+
+# Encodes 'Female' -> 0, 'Male' -> 1
+df["Gender"] = le.fit_transform(df["Gender"])
+
+# Encodes 'France' -> 0, 'Germany' -> 1, 'Spain' -> 2
+df["Geography"] = le.fit_transform(df["Geography"])
+
+# ----------------- Step 3: Feature & Target Split -----------------
+# Feature Matrix X (all columns except the target label)
+X = df.drop("Exited", axis=1)
+
+# Target Vector y (Binary: 0 = Retained, 1 = Exited/Churned)
+y = df["Exited"]
+
+# Split into 80% Training set and 20% Testing set
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# ----------------- Step 4: Feature Standardization -----------------
+# Neural Networks are extremely sensitive to feature magnitude differences.
+# Large values (like Balance: 100,000) will explode weights compared to small values (Tenure: 2).
+# CRITICAL VIVA NOTE: fit_transform ONLY on training set; transform on test set
+# to prevent Data Leakage!
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# ----------------- Step 5: Artificial Neural Network Architecture -----------------
+# MLPClassifier configures a Feedforward Fully Connected Neural Network:
+# - hidden_layer_sizes=(10, 5): 2 hidden layers (Layer 1: 10 neurons, Layer 2: 5 neurons)
+# - activation='relu': Rectified Linear Unit f(z) = max(0, z) for non-linear mappings
+# - solver='adam': Adaptive Moment Estimation optimizer
+# - max_iter=500: Maximum training iterations (epochs)
+model = MLPClassifier(
+    hidden_layer_sizes=(10, 5),
+    activation="relu",
+    solver="adam",
+    max_iter=500,
+    random_state=42
+)
+
+# Train the network via Forward Propagation and Backpropagation
+model.fit(X_train, y_train)
+
+# ----------------- Step 6: Prediction & Evaluation -----------------
+pred = model.predict(X_test)
+
+print("=================== Model Results ===================")
+print("Classification Accuracy:", round(accuracy_score(y_test, pred), 4))
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, pred))
+print("\nClassification Report:")
+print(classification_report(y_test, pred))
+print("=====================================================")
+
+
+"""
+============================================================================
+                         THEORY & ARCHITECTURE
+============================================================================
+
+1. ARTIFICIAL NEURAL NETWORK (ANN) ARCHITECTURE:
+   An MLP is organized into hierarchical layers of interconnected artificial nodes (neurons):
+   - Input Layer: Receives scaled features (e.g., CreditScore, Geography, Age, Balance, etc.).
+   - Hidden Layers:
+     * Hidden Layer 1: 10 neurons, receives inputs from input layer.
+     * Hidden Layer 2: 5 neurons, receives inputs from Layer 1.
+   - Output Layer: Single neuron outputting probability of churn (thresholded at 0.5).
+
+2. MATHEMATICS OF A SINGLE NEURON:
+   For inputs x = [x_1, x_2, ..., x_m]:
+   1. Affine Combination: z = Sum(w_i * x_i) + b = W^T * x + b
+   2. Activation Function: a = g(z)
+      - ReLU: g(z) = max(0, z). Solves vanishing gradient, computationally fast.
+      - Sigmoid: g(z) = 1 / (1 + e^(-z)). Maps values to (0, 1), used in output layer.
+
+3. FORWARD PROPAGATION VS BACKPROPAGATION:
+   - Forward Propagation: Inputs are fed through successive layers to compute 
+     predictions and loss using Binary Cross-Entropy Loss:
+     L = - (1/n) * Sum [ y_i * log(y_hat_i) + (1 - y_i) * log(1 - y_hat_i) ]
+   - Backpropagation: Uses the Calculus Chain Rule to propagate errors backward 
+     from the output layer to compute partial derivatives dL/dW and dL/db, updating 
+     weights via gradient descent: W = W - alpha * (dL/dW).
+
+4. DATA LEAKAGE PREVENTION:
+   - `sc.fit_transform(X_train)`: Computes mean and standard deviation from training 
+     data ONLY and scales X_train.
+   - `sc.transform(X_test)`: Uses training mean and std to scale the test data.
+   - Never fit on test data; doing so leaks future distribution knowledge into training!
+
+============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+============================================================================
+
+Q1: What is a Multilayer Perceptron (MLP)?
+A1: An MLP is a class of feedforward artificial neural network consisting of an 
+    input layer, one or more hidden layers, and an output layer, where every neuron 
+    in one layer connects to every neuron in the subsequent layer.
+
+Q2: What is the purpose of Activation Functions in Neural Networks?
+A2: Activation functions introduce non-linearity into the network. Without non-linear 
+    activation functions, no matter how many layers are added, the entire network 
+    collapses into a simple single-layer linear regression model.
+
+Q3: Why is ReLU preferred over Sigmoid in hidden layers?
+A3: ReLU (Rectified Linear Unit, max(0, z)) avoids the vanishing gradient problem 
+    because its derivative is constant (1 for z > 0). It is also computationally 
+    inexpensive compared to exponentials in Sigmoid.
+
+Q4: What is the "Dying ReLU" problem?
+A4: If a neuron's activation falls below zero, ReLU outputs 0 and its gradient becomes 0. 
+    The neuron stops updating weights and becomes permanently inactive ("dead"). 
+    Leaky ReLU or ELU solve this by having a small positive slope for z < 0.
+
+Q5: What is the difference between `fit_transform()` and `transform()`?
+A5: `fit_transform()` calculates statistics (mean, variance) and transforms data; 
+    `transform()` applies existing calculated statistics without recalculating. 
+    We fit only on training data to prevent Data Leakage from test data.
+
+Q6: What is Data Leakage in Machine Learning?
+A6: Data leakage occurs when information from outside the training dataset (such as 
+    test data distributions or ground truths) is inadvertently used to train the model, 
+    causing unrealistically optimistic evaluation scores that fail in production.
+
+Q7: What is Backpropagation?
+A7: Backpropagation is the algorithm that computes the gradient of the loss function 
+    with respect to each weight by applying the chain rule of calculus from the output 
+    layer back to the input layer.
+
+Q8: What loss function is used for binary classification in neural networks?
+A8: Binary Cross-Entropy Loss (also called Log Loss):
+    Loss = - [ y * log(p) + (1 - y) * log(1 - p) ].
+
+Q9: What is the difference between an Epoch, Batch Size, and Iteration?
+A9: - Epoch: One complete forward and backward pass of the entire training dataset.
+    - Batch Size: Number of training samples processed before updating weights.
+    - Iteration: Number of batches needed to complete one epoch (Iterations = Dataset Size / Batch Size).
+
+Q10: Why is Accuracy an insufficient metric for customer churn datasets?
+A10: Customer churn datasets are typically imbalanced (e.g., 85% stay, 15% exit). 
+     A naive model predicting everyone stays achieves 85% accuracy while finding zero 
+     churners. Metrics like Precision, Recall, F1-Score, and ROC-AUC are required.
+
+Q11: What is the difference between Precision and Recall?
+A11: - Precision: Out of all customers predicted to churn, how many actually churned? 
+       TP / (TP + FP).
+     - Recall (Sensitivity): Out of all actual churners, how many did the model identify? 
+       TP / (TP + FN).
+
+Q12: Why should identifier columns like CustomerId and Surname be dropped?
+A12: They are arbitrary unique identifiers that carry zero generalizable statistical 
+     pattern. Keeping them leads to overfitting on individual identities.
+
+Q13: Why is One-Hot Encoding often preferred over LabelEncoder for nominal categorical features?
+A13: LabelEncoder assigns integer ranks (0, 1, 2) which implies an artificial numerical 
+     ordering (e.g., Spain > Germany > France). One-Hot Encoding creates separate binary 
+     dummy columns, avoiding false ordinal relationships.
+
+Q14: What is Overfitting in Neural Networks and how can it be mitigated?
+A14: Overfitting occurs when the network memorizes training noise instead of generalizing. 
+     Mitigations include: Dropout layers, L1/L2 weight regularization, Early Stopping, 
+     reducing hidden units/layers, and collecting more data.
+
+Q15: What optimizer is used in this code and how does it work?
+A15: The 'adam' (Adaptive Moment Estimation) optimizer. It computes individual adaptive 
+     learning rates for different parameters using estimates of first and second moments 
+     of the gradients (combines AdaGrad and RMSProp).
+============================================================================
+"""

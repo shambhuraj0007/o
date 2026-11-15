@@ -1,0 +1,228 @@
+"""
+============================================================================
+ LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
+ ASSIGNMENT 2: K-MEANS & HIERARCHICAL CLUSTERING (UNSUPERVISED LEARNING)
+============================================================================
+
+PROBLEM STATEMENT:
+Given a dataset (sales_data_sample.csv), perform data preprocessing, determine 
+the optimal number of clusters using the Elbow Method (WCSS/Inertia), and apply 
+both K-Means Clustering and Hierarchical (Agglomerative) Clustering. Compare 
+and interpret the results.
+
+CORE CONCEPTS:
+- Unsupervised Learning: Finding hidden patterns or groupings in unlabeled data.
+- K-Means Clustering: A centroid-based partitioning algorithm that divides data 
+  into K non-overlapping subgroups by minimizing the Within-Cluster Sum of 
+  Squares (WCSS / Inertia).
+- Hierarchical Clustering: Creates a tree-like hierarchy of clusters 
+  (Dendrogram) using a bottom-up (Agglomerative) or top-down (Divisive) approach.
+============================================================================
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans, AgglomerativeClustering
+
+# ----------------- Step 1: Data Ingestion & Preprocessing -----------------
+# Load dataset (using 'latin1' encoding to handle special characters)
+# In lab environments, ensure sales_data_sample.csv is present in the working directory
+try:
+    df = pd.read_csv("sales_data_sample.csv", encoding="latin1")
+except FileNotFoundError:
+    print("Warning: 'sales_data_sample.csv' not found. Creating synthetic demo data...")
+    import numpy as np
+    df = pd.DataFrame({
+        "SALES": np.random.uniform(1000, 10000, 200),
+        "QUANTITYORDERED": np.random.uniform(10, 100, 200)
+    })
+
+# Select numerical feature columns for clustering
+# Clustering requires distance calculations; hence only numeric features are used
+X = df[["SALES", "QUANTITYORDERED"]]
+
+# ----------------- Step 2: Feature Standardization -----------------
+# K-Means relies heavily on Euclidean distance.
+# Features with larger scales (e.g., SALES ~ thousands) would dominate features
+# with smaller scales (e.g., QUANTITYORDERED ~ tens).
+# StandardScaler transforms features to mean = 0 and standard deviation = 1 (z-score).
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+# ----------------- Step 3: Determining Optimal K (Elbow Method) -----------------
+# WCSS (Within-Cluster Sum of Squares) / Inertia:
+# Formula: WCSS = Sum_{k=1}^K Sum_{x in C_k} ||x - mu_k||^2
+# Measures how compact/dense the clusters are. Lower is better.
+wcss = []
+
+for i in range(1, 11):
+    # n_init=10 runs K-Means 10 times with different centroid seeds and picks best
+    kmeans = KMeans(
+        n_clusters=i,
+        random_state=42,
+        n_init=10
+    )
+    kmeans.fit(X)
+    # inertia_ holds the calculated WCSS value
+    wcss.append(kmeans.inertia_)
+
+# Plot the Elbow Graph to visually identify the inflection / elbow point
+plt.figure(figsize=(8, 4))
+plt.plot(range(1, 11), wcss, marker="o", color="blue", linestyle="--")
+plt.xlabel("Number of Clusters (K)")
+plt.ylabel("WCSS (Inertia)")
+plt.title("Elbow Method For Optimal K Selection")
+plt.grid(True)
+plt.show()
+
+# ----------------- Step 4: K-Means Clustering -----------------
+# Selected K = 3 (typically where the rate of decrease bends sharply)
+km = KMeans(n_clusters=3, random_state=42, n_init=10)
+kmeans_result = km.fit_predict(X)
+
+print("\n--- K-Means Clustering ---")
+print("Cluster Centers (Centroids in standardized space):\n", km.cluster_centers_)
+print("Cluster Assignments (First 20 samples):")
+print(kmeans_result[:20])
+
+# ----------------- Step 5: Hierarchical (Agglomerative) Clustering -----------------
+# Starts with each point as an individual cluster and iteratively merges the closest pairs.
+# Default linkage is 'ward' which minimizes variance of merged clusters.
+hc = AgglomerativeClustering(n_clusters=3)
+hierarchical_result = hc.fit_predict(X)
+
+print("\n--- Hierarchical Agglomerative Clustering ---")
+print("Cluster Assignments (First 20 samples):")
+print(hierarchical_result[:20])
+
+
+"""
+============================================================================
+                         THEORY & ARCHITECTURE
+============================================================================
+
+1. K-MEANS ALGORITHM STEPS (Lloyd's Algorithm):
+   1. Choose number of clusters K.
+   2. Initialize K cluster centroids randomly (or via K-Means++).
+   3. Assign each data point to its closest centroid using Euclidean Distance:
+      d(p, q) = sqrt(Sum((p_i - q_i)^2)).
+   4. Recalculate centroids by taking the mean of all points assigned to that cluster:
+      mu_k = (1 / |C_k|) * Sum_{x in C_k} x.
+   5. Repeat steps 3 and 4 until centroids stop moving (convergence) or max iterations reached.
+
+2. WHAT IS K-MEANS++ INITIALIZATION?
+   Standard random centroid initialization can cause the algorithm to converge to 
+   poor local minima. K-Means++ chooses the first centroid randomly, and subsequent 
+   centroids with probability proportional to the squared distance D(x)^2 from 
+   the nearest existing centroid. This spreads out initial centroids effectively.
+
+3. HIERARCHICAL CLUSTERING & LINKAGE CRITERIA:
+   - Agglomerative (Bottom-Up): Every sample starts as its own cluster; closest 
+     clusters merge recursively until only 1 cluster remains.
+   - Divisive (Top-Down): Starts with one giant cluster containing all points and 
+     splits recursively.
+   - Linkage Methods:
+     * Ward Linkage: Minimizes total within-cluster variance (default in sklearn).
+     * Single Linkage: Minimum distance between points in two clusters (prone to chaining).
+     * Complete Linkage: Maximum distance between points in two clusters (compact clusters).
+     * Average Linkage: Average distance between all pairs of points across clusters.
+
+4. HOW TO EVALUATE CLUSTERING QUALITY:
+   - Elbow Method (Inertia/WCSS): Look for the "elbow" point where adding another 
+     cluster yields diminished reduction in variance.
+   - Silhouette Coefficient: s = (b - a) / max(a, b)
+     Where a = mean intra-cluster distance, b = mean nearest-cluster distance.
+     Range: -1 to +1 (Score near +1 indicates dense, well-separated clusters; 
+     score near 0 indicates overlapping clusters; negative indicates misclassification).
+   - Davies-Bouldin Index: Ratio of within-cluster scatter to between-cluster separation. 
+     Lower score is better.
+
+============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+============================================================================
+
+Q1: What is the primary difference between Supervised and Unsupervised Learning?
+A1: Supervised learning trains models on labeled input-output pairs (classification/regression), 
+    whereas Unsupervised learning identifies intrinsic structures, clusters, or patterns 
+    in unlabeled datasets without pre-existing target outputs.
+
+Q2: What is K-Means Clustering and what type of algorithm is it?
+A2: K-Means is an unsupervised, centroid-based, partitioning clustering algorithm 
+    that partitions n observations into K clusters such that each observation belongs 
+    to the cluster with the nearest mean (centroid).
+
+Q3: What is WCSS / Inertia in K-Means?
+A3: WCSS stands for Within-Cluster Sum of Squares. It measures the sum of squared 
+    Euclidean distances between each data point and its assigned cluster centroid. 
+    It quantifies the compactness (cohesion) of clusters.
+
+Q4: What is the Elbow Method and how does it help choose K?
+A4: The Elbow Method plots WCSS against different values of K (e.g., 1 to 10). 
+    As K increases, WCSS decreases. The point on the curve where the slope sharply 
+    flattens (resembling an elbow) is chosen as the optimal number of clusters.
+
+Q5: Why is Feature Scaling (StandardScaler) essential before running K-Means?
+A5: K-Means relies on Euclidean distance. If one feature has values in thousands 
+    (like Annual Sales) and another in tens (like Quantity), the large-scale feature 
+    will completely dominate the distance metric. Standardization brings all features 
+    to mean = 0, variance = 1, ensuring equal weighting.
+
+Q6: What is K-Means++ and why is it preferred over random initialization?
+A6: K-Means++ selects initial cluster centroids that are far apart from each other 
+    with probability proportional to their squared distance from nearest centroids. 
+    It prevents sub-optimal convergence and speeds up runtime.
+
+Q7: What is the time complexity of the K-Means algorithm?
+A7: O(I * K * n * d), where:
+    I = number of iterations until convergence,
+    K = number of clusters,
+    n = number of data points,
+    d = number of feature dimensions.
+
+Q8: What are the main limitations of K-Means Clustering?
+A8: - Requires specifying K in advance.
+    - Sensitive to outliers (which skew the mean centroid calculation).
+    - Assumes clusters are spherical and of equal variance; fails on non-convex, 
+      crescent-shaped, or elongated clusters.
+    - Can get stuck in local optima depending on initial seed.
+
+Q9: What is Hierarchical Agglomerative Clustering?
+A9: It is a bottom-up clustering technique where every observation starts in its 
+    own individual cluster, and pairs of clusters are successively merged based on 
+    proximity until all points merge into a single root cluster.
+
+Q10: What is a Dendrogram?
+A10: A tree diagram used to visualize the sequence of hierarchical merges or splits. 
+     The vertical height of each branch reflects the distance/dissimilarity between 
+     the two merged clusters. Cutting the dendrogram horizontally yields distinct clusters.
+
+Q11: What are the differences between Single, Complete, and Ward linkage?
+A11: - Single: Shortest distance between points of two clusters (susceptible to chaining).
+     - Complete: Maximum distance between points of two clusters (produces compact clusters).
+     - Ward: Minimizes the increase in total within-cluster variance after merging.
+
+Q12: What is the Silhouette Score and what do its values signify?
+A12: Silhouette Score measures how similar an object is to its own cluster compared 
+     to other clusters: s = (b - a) / max(a, b).
+     Range: [-1, +1]. Values close to +1 indicate strong cluster assignment; 0 means 
+     points are on boundary; negative means points likely placed in the wrong cluster.
+
+Q13: How does K-Means compare with Hierarchical Clustering?
+A13: - K-Means: Faster, O(n) per iteration, suitable for large datasets, requires K upfront.
+     - Hierarchical: Computationally heavier, O(n^2) or O(n^3) time and O(n^2) memory, 
+       does not require K in advance, produces informative tree visual (Dendrogram).
+
+Q14: What is the difference between Hard Clustering and Soft Clustering?
+A14: - Hard Clustering: Each data point belongs strictly to exactly one cluster (e.g., K-Means).
+     - Soft (Fuzzy) Clustering: Each point has a probability or degree of belonging 
+       to multiple clusters (e.g., Fuzzy C-Means, Gaussian Mixture Models).
+
+Q15: What are practical real-world applications of clustering?
+A15: - Customer market segmentation based on purchasing patterns.
+     - Anomaly and fraud detection in banking.
+     - Document and news article topic categorization.
+     - Image segmentation and color quantization.
+============================================================================
+"""

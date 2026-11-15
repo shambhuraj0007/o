@@ -1,0 +1,212 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/*
+ ============================================================================
+  LAB PRACTICE III (LP-3) - BLOCKCHAIN TECHNOLOGY
+  ASSIGNMENT 7 (B-2): BANK ACCOUNT MANAGEMENT SMART CONTRACT
+ ============================================================================
+
+ PROBLEM STATEMENT:
+ Implement a Bank Account smart contract on Ethereum using Solidity. 
+ The contract should enable users to deposit Ether, withdraw specified 
+ amounts with balance verification, and view account balance.
+
+ CORE CONCEPTS:
+ - Payable Functions & Ether transactions (Wei, Gwei, Ether).
+ - Global variables: `msg.sender` and `msg.value`.
+ - Error handling and precondition checks using `require()`.
+ - Ether transfer mechanics: `transfer()`, `send()`, and `call()`.
+ - Checks-Effects-Interactions (CEI) design pattern to prevent Reentrancy attacks.
+ ============================================================================
+*/
+
+contract Bank {
+
+    /*
+     * State Variable:
+     * Represents the tracked internal ledger balance of the bank account.
+     * Stored permanently in Ethereum storage (in Wei units: 1 Ether = 10^18 Wei).
+     * `public` modifier auto-generates a getter: `balance() returns (uint256)`.
+     */
+    uint public balance;
+
+    /**
+     * @notice Allows users to deposit Ether into the smart contract.
+     * @dev Marked `payable` to permit receiving incoming Ether.
+     * 
+     * `msg.value`: Special global variable holding the exact quantity of Wei 
+     *              transmitted with the transaction.
+     */
+    function deposit() public payable {
+        // Validation: Ensure the transaction actually sent non-zero Ether
+        require(msg.value > 0, "Deposit amount must be greater than zero");
+
+        // Increase the internal ledger balance
+        balance += msg.value;
+    }
+
+    /**
+     * @notice Allows withdrawal of funds from the bank contract.
+     * @dev Follows the Checks-Effects-Interactions (CEI) security pattern.
+     * 
+     * @param amount The quantity of Wei to withdraw
+     */
+    function withdraw(uint amount) public {
+
+        // 1. CHECKS: Validate preconditions and balance sufficiency
+        require(amount > 0, "Withdrawal amount must be greater than zero");
+        require(amount <= balance, "Insufficient balance");
+
+        // 2. EFFECTS: Update contract internal state BEFORE external transfer
+        // Prevents Reentrancy Attacks (like The DAO hack)!
+        balance -= amount;
+
+        // 3. INTERACTIONS: Transfer the Ether back to the caller
+        // `payable(msg.sender)` casts caller address to payable address
+        // `.transfer(amount)` sends exact Wei with 2300 gas stipend (reverts on failure)
+        payable(msg.sender).transfer(amount);
+    }
+
+    /**
+     * @notice View function to inspect current recorded ledger balance.
+     * @dev Does not alter state; consumes zero gas when queried off-chain.
+     * 
+     * @return uint Current recorded balance in Wei
+     */
+    function showBalance() public view returns (uint) {
+        return balance;
+    }
+
+    /**
+     * @notice Helper function returning the actual Ether balance held by contract address.
+     * @return uint Actual Wei held at address(this)
+     */
+    function getContractAddressBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+}
+
+/*
+ ============================================================================
+                         THEORY & ARCHITECTURE
+ ============================================================================
+
+ 1. ETHER DENOMINATIONS:
+    The smallest denomination in Ethereum is WEI:
+    - 1 Wei   = 1
+    - 1 Gwei  = 10^9 Wei  = 0.000000001 Ether (commonly used for Gas prices)
+    - 1 Ether = 10^18 Wei = 1,000,000,000,000,000,000 Wei.
+    In Solidity, all mathematical computations are done in WEI.
+
+ 2. THREE METHODS OF SENDING ETHER IN SOLIDITY:
+    -------------------------------------------------------------------------
+    Method       | Gas Stipend | Reverts on Failure | Return Value | Status
+    -------------------------------------------------------------------------
+    transfer()   | 2300 gas    | Yes (Throws error) | None         | Legacy
+    send()       | 2300 gas    | No (Returns false) | bool         | Legacy
+    call{val}()  | Forward all | No (Returns false) | (bool, bytes)| RECOMMENDED
+    -------------------------------------------------------------------------
+    Recommended modern pattern:
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Ether transfer failed");
+
+ 3. CHECKS-EFFECTS-INTERACTIONS (CEI) PATTERN:
+    To safeguard smart contracts against REENTRANCY ATTACKS:
+    1. Checks: Validate all parameters and conditions (e.g., `require(amount <= balance)`).
+    2. Effects: Update internal state variables first (e.g., `balance -= amount`).
+    3. Interactions: Interact with external addresses or contracts (e.g., send Ether).
+    If interactions are done before updating state, an attacker's fallback function 
+    can recursively call `withdraw()` again before the balance is decremented, 
+    draining the contract completely!
+
+ 4. EXTERNALLY OWNED ACCOUNTS (EOA) VS CONTRACT ACCOUNTS:
+    - EOA: Controlled by private keys; holds Ether; can initiate transactions.
+    - Contract Account: Controlled by code; has its own storage and Ether balance; 
+      acts only in response to transactions received.
+
+ ============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+ ============================================================================
+
+ Q1: What does the `payable` modifier signify on a function?
+ A1: It indicates that the function can receive Ether along with the execution call. 
+     If a function without `payable` receives Ether (msg.value > 0), the transaction 
+     automatically reverts.
+
+ Q2: What are `msg.sender` and `msg.value`?
+ A2: - `msg.sender`: An address representing the account or contract that initiated 
+       the current function call.
+     - `msg.value`: The amount of Ether (denominated in Wei) sent along with the transaction.
+
+ Q3: What is the relationship between Wei, Gwei, and Ether?
+ A3: 1 Ether = 10^9 Gwei = 10^18 Wei. Wei is the fundamental and smallest indivisible 
+     unit of currency on Ethereum.
+
+ Q4: What is the difference between `require()`, `assert()`, and `revert()`?
+ A4: - `require(condition, message)`: Validates user inputs and conditions. If false, 
+       it reverts the transaction and refunds remaining unused gas.
+     - `assert(condition)`: Validates internal invariants and conditions that should 
+       never be false. Consumes all remaining gas on failure.
+     - `revert CustomError()`: Explicitly aborts execution, reverting state changes 
+       and returning a custom error to save gas.
+
+ Q5: Why is `balance -= amount` executed BEFORE `payable(msg.sender).transfer(amount)`?
+ A5: To adhere to the Checks-Effects-Interactions (CEI) pattern and prevent Reentrancy 
+     attacks. Updating state before transferring prevents a malicious contract from 
+     re-entering `withdraw()` repeatedly before balance deduction.
+
+ Q6: What was the famous "The DAO Hack" of 2016?
+ A6: A vulnerable smart contract transferred Ether before updating user balance. 
+     The attacker used a malicious contract with a fallback function that repeatedly 
+     called `withdraw()`, draining 3.6 million Ether. This led to the Ethereum hard fork 
+     into Ethereum (ETH) and Ethereum Classic (ETC).
+
+ Q7: What are the differences between `transfer()`, `send()`, and `call()`?
+ A7: - `transfer()`: Forwards 2300 gas; automatically throws an error and reverts on failure.
+     - `send()`: Forwards 2300 gas; returns boolean false on failure (does not auto-revert).
+     - `call{value: amount}("")`: Forwards adjustable/all gas; returns a boolean success status; 
+       currently the official recommended approach for sending Ether.
+
+ Q8: Why was the 2300 gas limit on `transfer()` and `send()` deemed problematic?
+ A8: Because gas costs for EVM opcodes change with hard forks (e.g., EIP-1884). If 
+     the receiver is a smart contract whose fallback function needs more than 2300 gas, 
+     `transfer()` fails permanently.
+
+ Q9: What is the difference between `address(this).balance` and `balance` in this contract?
+ A9: - `address(this).balance`: The actual balance of Wei physically stored in the 
+       smart contract account on Ethereum.
+     - `balance`: A contract state variable acting as an internal tracking ledger.
+
+ Q10: How can this contract be improved for multiple individual users?
+ A10: Instead of a single global `uint public balance`, use a mapping:
+      `mapping(address => uint) public balances;`
+      and track each user's balance individually via `balances[msg.sender]`.
+
+ Q11: What is a Reentrancy Guard (Mutex)?
+ A11: A modifier or boolean flag (e.g., `bool private locked;`) that locks function 
+      execution when entered and unlocks upon exit, preventing any recursive re-entry 
+      into the function while the first invocation is in progress.
+
+ Q12: Can a contract receive Ether without calling a `payable` function?
+ A12: Yes! Two scenarios:
+      1. As the recipient of a `selfdestruct(target)` call from another contract.
+      2. As the coinbase/miner reward address for mined blocks.
+
+ Q13: What is the purpose of the `view` modifier in `showBalance()`?
+ A13: It specifies that the function only inspects/reads contract state variables 
+      without modifying blockchain state. It executes free of gas when called off-chain.
+
+ Q14: What is Gas Limit vs Gas Price?
+ A14: - Gas Limit: The maximum number of computational gas units you are willing 
+       to consume for a transaction.
+     - Gas Price: The amount of Ether (in Gwei) you are willing to pay per unit of gas.
+     - Total Transaction Fee = Gas Used * Gas Price.
+
+ Q15: What tools are used to test and audit Solidity smart contracts for vulnerabilities?
+ A15: - Slither (Static analysis tool)
+      - Mythril (Security analysis tool using symbolic execution)
+      - Hardhat / Foundry (Unit testing frameworks with fuzzing)
+      - OpenZeppelin Contracts (Audited, battle-tested standard libraries).
+ ============================================================================
+*/

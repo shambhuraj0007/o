@@ -1,0 +1,214 @@
+import java.util.Scanner;
+
+/*
+ ============================================================================
+  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
+  ASSIGNMENT 1: FIBONACCI NUMBERS (RECURSIVE & NON-RECURSIVE / ITERATIVE)
+ ============================================================================
+ 
+ PROBLEM STATEMENT:
+ Write a program to calculate Fibonacci numbers and analyze their time 
+ and space complexity for both Recursive and Non-Recursive (Iterative) methods.
+
+ DEFINITION:
+ The Fibonacci sequence is a series of numbers where each number is the sum 
+ of the two preceding ones, starting from 0 and 1:
+ F(0) = 0, F(1) = 1, and F(n) = F(n-1) + F(n-2) for n >= 2.
+ Sequence: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, ...
+ ============================================================================
+*/
+
+public class Fibonacci {
+
+    /**
+     * RECURSIVE METHOD:
+     * Computes the n-th Fibonacci number using divide-and-conquer recursion.
+     * 
+     * Recurrence Relation: T(n) = T(n-1) + T(n-2) + O(1)
+     * Time Complexity:  O(2^n) - Exponential (Upper bound), precisely O(1.618^n)
+     * Space Complexity: O(n)   - Auxiliary call stack space for recursion depth
+     * 
+     * @param n index of Fibonacci number to compute
+     * @return n-th Fibonacci number
+     */
+    static int fibRecursive(int n) {
+        // Base Condition: F(0) = 0, F(1) = 1
+        // Without base conditions, recursion will result in infinite calls -> StackOverflowError
+        if (n <= 1)
+            return n;
+
+        // Recursive Step: F(n) = F(n - 1) + F(n - 2)
+        // Redundant calculations occur here because subproblems overlap heavily
+        return fibRecursive(n - 1) + fibRecursive(n - 2);
+    }
+
+    /**
+     * NON-RECURSIVE (ITERATIVE) METHOD:
+     * Computes Fibonacci numbers sequentially in a bottom-up manner using two variables.
+     * 
+     * Time Complexity:  O(n) - Single loop running n times
+     * Space Complexity: O(1) - Constant auxiliary space (only a, b, c variables)
+     * 
+     * @param n number of terms to print in the series
+     */
+    static void fibIterative(int n) {
+        // Base values for F(0) and F(1)
+        int a = 0, b = 1;
+
+        System.out.print("Fibonacci Series: ");
+
+        for (int i = 0; i < n; i++) {
+            // Print the current term
+            System.out.print(a + " ");
+
+            // Shift variables forward: compute next term and update previous two
+            int c = a + b; // Next Fibonacci number
+            a = b;         // Update F(i-2) to F(i-1)
+            b = c;         // Update F(i-1) to F(i)
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of terms: ");
+        int n = sc.nextInt();
+
+        // 1. Execute Iterative Approach
+        System.out.println("\n--- Iterative (Non-Recursive) Fibonacci ---");
+        fibIterative(n);
+
+        // 2. Execute Recursive Approach
+        System.out.println("\n\n--- Recursive Fibonacci ---");
+        for (int i = 0; i < n; i++) {
+            System.out.print(fibRecursive(i) + " ");
+        }
+
+        System.out.println();
+        sc.close();
+    }
+}
+
+/*
+ ============================================================================
+                         THEORY & ARCHITECTURE
+ ============================================================================
+
+ 1. RECURSION VS ITERATION (CORE DIFFERENCES):
+    -------------------------------------------------------------------------
+    Feature              | Recursive Approach        | Iterative Approach
+    -------------------------------------------------------------------------
+    Time Complexity      | O(2^n) (Exponential)      | O(n) (Linear)
+    Space Complexity     | O(n) (Call stack)         | O(1) (Constant)
+    Overhead             | Function call overhead    | No call overhead
+    Overlapping Problems | Recomputes same values    | Computes each value once
+    Stack Overflow Risk  | High for large n          | None
+    Implementation       | Elegant, math-like        | Loop constructs
+
+ 2. WHY IS RECURSIVE FIBONACCI EXPONENTIAL?
+    Consider the recursion tree for fibRecursive(5):
+                         fib(5)
+                     /           \
+               fib(4)             fib(3)
+              /      \           /      \
+          fib(3)    fib(2)     fib(2)   fib(1)
+          /    \    /    \     /    \
+       fib(2) f(1) f(1)  f(0) f(1)  f(0)
+       /   \
+     f(1)  f(0)
+
+    Notice:
+    - fib(3) is evaluated 2 times.
+    - fib(2) is evaluated 3 times.
+    - fib(1) is evaluated 5 times.
+    The number of nodes in this binary tree is approximately 2^(n+1) - 1.
+    Specifically, the tree grows proportionally to the Golden Ratio: phi^n,
+    where phi = (1 + sqrt(5)) / 2 approx 1.618. Hence, T(n) = O(1.618^n) approx O(2^n).
+
+ 3. OPTIMIZATION PARADIGMS:
+    - Dynamic Programming (Memoization): Cache previously calculated values -> O(n) time, O(n) space.
+    - Dynamic Programming (Tabulation): Array bottom-up -> O(n) time, O(n) space.
+    - Space-Optimized DP (Iterative): Use two variables -> O(n) time, O(1) space.
+    - Matrix Exponentiation: [[1,1],[1,0]]^n using binary exponentiation -> O(log n) time, O(log n) space.
+    - Binet's Formula: F(n) = (phi^n - psi^n) / sqrt(5) -> O(1) or O(log n), but suffers from floating-point roundoff errors for large n.
+
+ ============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+ ============================================================================
+
+ Q1: What is the Fibonacci sequence and what is its recurrence relation?
+ A1: The Fibonacci sequence is a mathematical series where each number is the sum 
+     of the preceding two numbers.
+     Recurrence: F(n) = F(n-1) + F(n-2) with base conditions F(0) = 0 and F(1) = 1.
+
+ Q2: What is the time complexity of the recursive Fibonacci implementation?
+ A2: Naive recursive time complexity is O(2^n) exponential (tight bound is O(phi^n) 
+     where phi = 1.6180339887... the Golden Ratio).
+
+ Q3: What is the space complexity of naive recursive Fibonacci and why?
+ A3: O(n) auxiliary space due to the call stack frames created for recursion depth. 
+     The maximum depth of the recursion tree is n.
+
+ Q4: What is the time and space complexity of the iterative method?
+ A4: Time Complexity is O(n) as it iterates through a single loop n times.
+     Space Complexity is O(1) because it only maintains 3 integer variables (a, b, c).
+
+ Q5: Why is naive recursion so inefficient for Fibonacci?
+ A5: Because of overlapping subproblems. Subproblems like fib(n-2), fib(n-3) are 
+     computed repeatedly hundreds or millions of times without remembering earlier 
+     results.
+
+ Q6: What is the difference between Tail Recursion and Non-Tail Recursion?
+ A6: In tail recursion, the recursive call is the very last operation executed in the 
+     function. Naive fibonacci is non-tail recursive because after fibRecursive(n-1) 
+     and fibRecursive(n-2) return, the addition (+) operator must still be evaluated.
+
+ Q7: What causes a StackOverflowError in recursive Fibonacci?
+ A7: Every recursive call allocates a stack frame in the JVM call stack memory. 
+     If n is very large, the recursion depth exceeds the allocated thread stack limit 
+     (default usually 1MB), resulting in java.lang.StackOverflowError.
+
+ Q8: How can recursive Fibonacci be optimized using Dynamic Programming?
+ A8: By using Memoization (Top-Down): store intermediate results in an array or HashMap. 
+     If a subproblem has already been solved, return the cached result in O(1). 
+     This reduces the time complexity from O(2^n) to O(n).
+
+ Q9: What is the fastest known algorithm to compute the n-th Fibonacci number?
+ A9: Matrix Exponentiation:
+     [ F(n+1)  F(n)   ] = [ 1  1 ]^n
+     [ F(n)    F(n-1) ]   [ 1  0 ]
+     Using repeated squaring (divide and conquer power), it computes in O(log n) time.
+
+ Q10: What is Binet's Formula and why is it not always used in practice?
+ A10: Binet's Formula: F(n) = (phi^n - psi^n) / sqrt(5).
+      It computes F(n) in closed form, but in programming, floating-point numbers 
+      (double/float) have precision limitations, causing wrong results for n >= 70.
+
+ Q11: At what value of n does an integer overflow occur in Java for Fibonacci?
+ A11: A 32-bit signed int in Java overflows at F(47) (since F(46) = 1,836,311,903 
+      fits in int, but F(47) exceeds Integer.MAX_VALUE = 2,147,483,647).
+      For 64-bit long, it overflows at F(93). For larger values, java.math.BigInteger 
+      must be used.
+
+ Q12: How many total recursive function calls are made to compute fibRecursive(5)?
+ A12: Total calls = 2 * F(n+1) - 1. For n = 5: 2 * F(6) - 1 = 2 * 8 - 1 = 15 calls.
+
+ Q13: What are real-world applications of Fibonacci numbers in computer science?
+ A13: - Fibonacci Search Technique (Divide and conquer search algorithm)
+      - Fibonacci Heaps (Priority queue with amortized O(1) decrease-key operations)
+      - Planning Poker in Agile/Scrum estimation
+      - Pseudo-random number generators (Lagged Fibonacci generator)
+      - Audio compression and computer graphics algorithms.
+
+ Q14: Which design strategy is used by the iterative method vs recursive method?
+ A14: Recursive method uses Divide and Conquer (splitting into subproblems).
+      Iterative method uses Bottom-Up Dynamic Programming (Space-Optimized).
+
+ Q15: Why is Fibonacci a classic example used to introduce Dynamic Programming?
+ A15: Because it exhibits the two fundamental properties required for Dynamic 
+      Programming:
+      1. Overlapping Subproblems (the same subproblems are solved multiple times).
+      2. Optimal Substructure (the solution to F(n) is constructed directly from the 
+         optimal solutions of F(n-1) and F(n-2)).
+ ============================================================================
+*/

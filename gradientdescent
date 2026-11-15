@@ -1,0 +1,176 @@
+"""
+============================================================================
+ LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
+ ASSIGNMENT 1: GRADIENT DESCENT OPTIMIZATION ALGORITHM
+============================================================================
+
+PROBLEM STATEMENT:
+Implement Gradient Descent algorithm to find the local minimum of a function 
+(e.g., y = x^2). Explore the impact of parameters like learning rate and 
+number of iterations on convergence.
+
+CORE CONCEPT:
+Gradient Descent is a first-order iterative optimization algorithm used to 
+find a local minimum of a differentiable objective function. It calculates the 
+gradient (derivative) of the function at the current point and moves in the 
+direction of the steepest descent (opposite to the gradient).
+
+UPDATE FORMULA:
+    x_new = x_old - (learning_rate * f'(x_old))
+    where:
+      - x_old is the current position.
+      - f'(x_old) is the first derivative (gradient) indicating slope.
+      - learning_rate (alpha) controls the step size taken per iteration.
+============================================================================
+"""
+
+# Objective Function to minimize: f(x) = x^2
+def function(x):
+    """
+    Evaluates the objective function at a given point x.
+    For f(x) = x^2, the global minimum is at x = 0 with f(0) = 0.
+    """
+    return x**2
+
+# First Derivative (Gradient): f'(x) = 2x
+def derivative(x):
+    """
+    Calculates the slope/gradient of the function at point x.
+    - If x > 0: derivative > 0, so x decreases (moves left towards 0).
+    - If x < 0: derivative < 0, so x increases (moves right towards 0).
+    - At x = 0: derivative = 0, slope is flat (stationary minimum).
+    """
+    return 2 * x
+
+# ----------------- Hyperparameters & Initialization -----------------
+x = 10                 # Initial starting point (guess)
+learning_rate = 0.1    # Step size multiplier (alpha). Typical range: 0.001 to 0.1
+iterations = 100       # Total number of update cycles (epochs)
+
+print(f"Initial Starting Point: x = {x}, Initial f(x) = {function(x)}")
+print(f"Learning Rate (alpha) = {learning_rate}, Iterations = {iterations}\n")
+
+# ----------------- Gradient Descent Optimization Loop -----------------
+for i in range(iterations):
+    grad = derivative(x)  # Compute the gradient at current x
+    
+    # Update rule: Step in the opposite direction of the gradient
+    x = x - learning_rate * grad
+
+    # Optionally print progress every 10 iterations
+    if (i + 1) % 10 == 0 or i == 0:
+        print(f"Iteration {i+1:3d}: x = {x:10.6f}, Gradient = {grad:10.6f}, f(x) = {function(x):10.6f}")
+
+print("\n----------------- Final Optimization Result -----------------")
+print("Local Minimum Point (x):", x)
+print("Minimum Value (f(x)):   ", function(x))
+
+
+"""
+============================================================================
+                         THEORY & ARCHITECTURE
+============================================================================
+
+1. MATHEMATICAL FOUNDATION:
+   Gradient Descent seeks the minimum of an objective loss function L(theta).
+   Taylor expansion gives:
+       L(theta + delta_theta) approx L(theta) + grad(L)^T * delta_theta
+   To achieve the greatest decrease in L, delta_theta should point directly 
+   opposite to the gradient vector:
+       delta_theta = - alpha * grad(L)
+
+2. TYPES OF GRADIENT DESCENT:
+   -------------------------------------------------------------------------
+   Variant           | Data per Update      | Pros              | Cons
+   -------------------------------------------------------------------------
+   Batch GD (BGD)    | Entire dataset       | Stable convergence| Slow, high memory
+   Stochastic (SGD)  | 1 random sample      | Fast, escapes min | High variance/noisy
+   Mini-Batch GD     | Small batch (32-256) | Best of both      | Tunable batch size
+
+3. EFFECT OF LEARNING RATE (ALPHA):
+   - Alpha too large: Steps overshoot the minimum; causes oscillation or divergence (loss -> inf/NaN).
+   - Alpha too small: Tiny steps; takes thousands of iterations; prone to get stuck in local minima or plateaus.
+   - Ideal Alpha: Smooth, monotonic decrease of loss converging to the global minimum.
+
+4. ADVANCED OPTIMIZERS IN DEEP LEARNING:
+   - Momentum: Adds a fraction of previous update to damp oscillations (v = beta*v + alpha*grad).
+   - Adagrad: Adapts learning rate per parameter based on historical squared gradients.
+   - RMSprop: Uses exponential moving average of squared gradients to resolve Adagrad's diminishing rate.
+   - Adam (Adaptive Moment Estimation): Combines Momentum (first moment) and RMSprop (second moment).
+
+============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+============================================================================
+
+Q1: What is Gradient Descent and why is it used in Machine Learning?
+A1: Gradient Descent is a first-order iterative optimization algorithm used to 
+    minimize a loss/cost function by adjusting model parameters (weights and biases) 
+    in the direction of steepest descent.
+
+Q2: What is the gradient of a function?
+A2: The gradient is a vector of partial derivatives representing the rate and 
+    direction of the fastest increase of a function. Its negative points towards 
+    the steepest decrease.
+
+Q3: What is the role of the Learning Rate (alpha)?
+A3: The learning rate is a hyperparameter determining the size of the steps taken 
+    towards the minimum during each iteration.
+
+Q4: What happens if the learning rate is set too high or too low?
+A4: - Too high: The algorithm may overshoot the minimum, oscillate wildly, or diverge.
+    - Too low: The algorithm takes an excessively long time to converge and may get 
+      trapped in local minima or saddle points.
+
+Q5: What is the difference between Batch GD, Stochastic GD, and Mini-Batch GD?
+A5: - Batch GD: Computes gradients over the entire dataset before updating weights.
+    - Stochastic GD (SGD): Updates weights for each individual training sample.
+    - Mini-Batch GD: Updates weights using small batches (e.g., 32, 64, 128 samples).
+
+Q6: What is a Local Minimum vs Global Minimum?
+A6: - Local Minimum: A point where the function value is smaller than nearby points, 
+      but not necessarily the smallest across the entire domain.
+    - Global Minimum: The absolute lowest point of the function across its entire domain.
+
+Q7: What is a Convex Function and why is it desirable in optimization?
+A7: A convex function has only ONE global minimum and NO sub-optimal local minima. 
+    Gradient descent is guaranteed to converge to the global minimum on convex functions 
+    (like Linear Regression / Mean Squared Error).
+
+Q8: What is a Saddle Point?
+A8: A saddle point is a stationary point where the gradient is zero, but it is a 
+    minimum along one dimension and a maximum along another (neither a minimum nor maximum).
+
+Q9: What is the stopping criterion for Gradient Descent?
+A9: - Reaching maximum iterations (epochs).
+    - Absolute change in loss |L_new - L_old| falls below a threshold (tolerance epsilon).
+    - Norm of gradient ||grad|| becomes approximately zero.
+
+Q10: Why do we subtract the gradient instead of adding it in the update rule?
+A10: Because the gradient points in the direction of steepest *increase*. 
+     Subtracting it moves the parameters in the direction of steepest *decrease*.
+
+Q11: What is the Vanishing Gradient problem?
+A11: In deep neural networks, gradients can become exponentially small as they 
+     propagate backwards, causing early layers to train extremely slowly or stop learning.
+
+Q12: How does the Momentum method improve standard Gradient Descent?
+A12: Momentum accelerates SGD in the relevant direction and dampens oscillations 
+     by incorporating a fraction of the velocity vector from the previous step.
+
+Q13: What is the difference between first-order and second-order optimization?
+A13: - First-order: Uses only first derivatives / gradients (e.g., Gradient Descent, Adam).
+     - Second-order: Uses second derivatives / Hessian matrix (e.g., Newton's method, 
+       BFGS); calculates curvature for faster convergence but is computationally 
+       expensive (O(n^2) space, O(n^3) inversion).
+
+Q14: How does feature scaling (StandardScaler / MinMax) affect Gradient Descent?
+A14: Without scaling, cost contours are elongated ellipses, causing gradients to 
+     oscillate erratically. Feature scaling sphericalizes contours, allowing direct, 
+     rapid convergence towards the minimum.
+
+Q15: What is the Adam optimizer and why is it preferred in modern Deep Learning?
+A15: Adam (Adaptive Moment Estimation) computes individual adaptive learning rates 
+     for different parameters by tracking both exponentially decaying averages of 
+     past gradients (momentum) and past squared gradients (uncentered variance).
+============================================================================
+"""

@@ -1,0 +1,222 @@
+"""
+============================================================================
+ LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
+ ASSIGNMENT 3: UBER FARE PREDICTION (REGRESSION ANALYSIS)
+============================================================================
+
+PROBLEM STATEMENT:
+Predict Uber ride fare amount using historical ride data (GPS pickup/dropoff 
+coordinates, passenger count). Apply Linear Regression and Random Forest 
+Regressor, and compare their performance using evaluation metrics: 
+R-squared (R2) and Root Mean Squared Error (RMSE).
+
+ALGORITHMIC PARADIGMS:
+- Supervised Learning - Regression: Target variable 'fare_amount' is continuous.
+- Linear Regression: Parametric model finding the best-fit hyperplane via 
+  Ordinary Least Squares (OLS).
+- Random Forest Regressor: Non-parametric ensemble learning technique using 
+  Bootstrap Aggregating (Bagging) on multiple decision trees.
+============================================================================
+"""
+
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import r2_score, mean_squared_error
+
+# ----------------- Step 1: Load Dataset -----------------
+# Ensure 'uber.csv' is present in the working directory
+try:
+    df = pd.read_csv("uber.csv")
+except FileNotFoundError:
+    print("Warning: 'uber.csv' not found. Creating synthetic demo data...")
+    df = pd.DataFrame({
+        "pickup_longitude": np.random.uniform(-74.05, -73.90, 500),
+        "pickup_latitude": np.random.uniform(40.70, 40.85, 500),
+        "dropoff_longitude": np.random.uniform(-74.05, -73.90, 500),
+        "dropoff_latitude": np.random.uniform(40.70, 40.85, 500),
+        "passenger_count": np.random.randint(1, 6, 500),
+        "fare_amount": np.random.uniform(5, 50, 500)
+    })
+
+# ----------------- Step 2: Data Cleaning & Preprocessing -----------------
+# 1. Drop rows containing missing (NaN) values
+df = df.dropna()
+
+# 2. Drop non-predictive metadata columns ('Unnamed: 0' index, unique 'key' string)
+df = df.drop(columns=["Unnamed: 0", "key"], errors="ignore")
+
+# 3. Outlier Removal:
+# Negative fare amounts or zero fare amounts are erroneous data.
+# Fares exceeding $100 are extreme outliers that skew regression slopes.
+df = df[(df["fare_amount"] > 0) & (df["fare_amount"] < 100)]
+
+# ----------------- Step 3: Feature & Target Selection -----------------
+# Predictor features (X): GPS coordinates and passenger count
+X = df[[
+    "pickup_longitude",
+    "pickup_latitude",
+    "dropoff_longitude",
+    "dropoff_latitude",
+    "passenger_count"
+]]
+
+# Target variable (y): Continuous numeric ride fare
+y = df["fare_amount"]
+
+# ----------------- Step 4: Train-Test Split -----------------
+# 80% data for model training, 20% held out for unseen testing evaluation
+# random_state=42 guarantees reproducibility of splits
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# ----------------- Step 5: Model 1 - Linear Regression -----------------
+# Fits linear equation: y = beta_0 + beta_1*x_1 + ... + beta_n*x_n
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+
+# Predict on unseen test set
+pred1 = lr.predict(X_test)
+
+# ----------------- Step 6: Model 2 - Random Forest Regressor -----------------
+# Ensemble of 50 Decision Trees; averages predictions to reduce model variance
+rf = RandomForestRegressor(n_estimators=50, random_state=42)
+rf.fit(X_train, y_train)
+
+# Predict on unseen test set
+pred2 = rf.predict(X_test)
+
+# ----------------- Step 7: Model Evaluation & Comparison -----------------
+print("=================== Model Evaluation ===================")
+print("1. Linear Regression:")
+print("   R2 Score (Variance explained): ", round(r2_score(y_test, pred1), 4))
+print("   RMSE (Root Mean Squared Error):", round(np.sqrt(mean_squared_error(y_test, pred1)), 4))
+
+print("\n2. Random Forest Regressor:")
+print("   R2 Score (Variance explained): ", round(r2_score(y_test, pred2), 4))
+print("   RMSE (Root Mean Squared Error):", round(np.sqrt(mean_squared_error(y_test, pred2)), 4))
+print("========================================================")
+
+
+"""
+============================================================================
+                         THEORY & ARCHITECTURE
+============================================================================
+
+1. REGRESSION VS CLASSIFICATION:
+   - Regression: Predicts continuous quantities (e.g., price, salary, temperature).
+   - Classification: Predicts discrete categorical labels (e.g., spam/ham, yes/no).
+
+2. LINEAR REGRESSION ASSUMPTIONS:
+   a) Linearity: Relationship between predictors X and target y is linear.
+   b) Homoscedasticity: Constant variance of residuals across all levels of X.
+   c) Independence: Observations and residual errors are independent.
+   d) Normality: Residuals (y - y_hat) are normally distributed.
+   e) No Multicollinearity: Independent features are not strongly correlated.
+
+3. RANDOM FOREST REGRESSOR (HOW IT WORKS):
+   - It is an ensemble learning method based on BAGGING (Bootstrap Aggregating).
+   - Draws multiple bootstrap subsets of training data with replacement.
+   - Fits an individual Decision Tree on each bootstrap sample using a random 
+     subset of features at each split point (Feature Bagging).
+   - Combines tree outputs by taking the mathematical AVERAGE across all trees:
+     y_hat = (1 / B) * Sum_{b=1}^B T_b(x).
+   - Advantage: Drastically reduces variance and over-fitting compared to a single decision tree.
+
+4. EVALUATION METRICS MATHEMATICAL FORMULAS:
+   - Mean Squared Error (MSE):
+     MSE = (1 / n) * Sum_{i=1}^n (y_i - y_hat_i)^2
+   - Root Mean Squared Error (RMSE):
+     RMSE = sqrt(MSE). Measures standard deviation of prediction errors in original target units ($).
+   - R-squared (Coefficient of Determination):
+     R^2 = 1 - (SS_res / SS_tot) = 1 - [Sum(y_i - y_hat_i)^2 / Sum(y_i - y_bar)^2]
+     Measures the proportion of variance in y explained by features X.
+     Range: (-inf, 1.0]. A value of 1.0 denotes perfect predictions.
+
+============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+============================================================================
+
+Q1: What is the primary difference between Linear Regression and Logistic Regression?
+A1: Linear Regression predicts continuous numeric target values (e.g., fare amount), 
+    whereas Logistic Regression outputs probabilities mapped between 0 and 1 via the 
+    sigmoid function for binary/multiclass classification.
+
+Q2: Why is outlier removal critical in regression problems?
+A2: Outliers exert disproportionate leverage on Ordinary Least Squares (OLS) fitting 
+    because squared errors ((y - y_hat)^2) heavily penalize large deviations, tilting 
+    the regression line and degrading generalization.
+
+Q3: What does the R-squared (R2) score indicate?
+A3: R-squared measures the proportion of total variance in the dependent variable (y) 
+    that is predictable from the independent features (X). An R2 of 0.85 means 85% of 
+    fare variation is explained by the model.
+
+Q4: Can R-squared be negative?
+A4: Yes! R-squared can be negative when evaluating on test data if the model performs 
+    worse than a simple horizontal line predicting the mean of the target variable.
+
+Q5: What is the difference between MSE and RMSE?
+A5: MSE squares the errors, resulting in squared units (e.g., dollars squared $^2$), 
+    which is difficult to interpret. RMSE takes the square root, returning the error 
+    metric back to the original units of the target variable (dollars $).
+
+Q6: What is MAE (Mean Absolute Error) and when is it preferred over RMSE?
+A6: MAE = (1/n) * Sum(|y_i - y_hat_i|). It treats all errors proportionally without 
+    squaring. MAE is preferred when the dataset contains unavoidable outliers that 
+    should not excessively skew model evaluation.
+
+Q7: Why does Random Forest generally outperform Linear Regression on this dataset?
+A7: Ride fares depend on non-linear relationships and feature interactions (e.g., 
+    distance, traffic congestion, geographical bounds) which Linear Regression cannot 
+    model without polynomial terms. Random Forest captures complex non-linear patterns 
+    and feature interactions naturally.
+
+Q8: What is Bagging (Bootstrap Aggregation)?
+A8: Bagging generates multiple subsets of training data by sampling with replacement 
+    (bootstrapping), trains an independent model on each subset, and aggregates their 
+    predictions (averaging for regression, voting for classification) to reduce variance.
+
+Q9: What does the `n_estimators` parameter in RandomForestRegressor represent?
+A9: It specifies the total number of decision trees to be built in the forest ensemble. 
+    Increasing n_estimators generally improves stability and performance up to a 
+    point of diminishing returns.
+
+Q10: What is the Bias-Variance Tradeoff?
+A10: - Bias: Error from incorrect assumptions; high bias causes underfitting (e.g., 
+      simple linear model on complex data).
+    - Variance: Sensitivity to fluctuations in training data; high variance causes 
+      overfitting (e.g., deep unpruned single decision tree).
+    - Random Forest reduces variance without substantially increasing bias.
+
+Q11: What feature engineering could drastically improve the Uber fare model?
+A11: Calculating the Haversine or Manhattan distance between (pickup_latitude, pickup_longitude) 
+     and (dropoff_latitude, dropoff_longitude), extracting day of week, hour of day, 
+     rush hour indicators, and airport destination flags.
+
+Q12: What is the purpose of `random_state=42` in train_test_split?
+A12: It sets a fixed seed for the pseudo-random number generator, guaranteeing that 
+     the data is shuffled and split identically every time the code runs for reproducibility.
+
+Q13: What is Multicollinearity and how does it affect Linear Regression?
+A13: Multicollinearity occurs when two or more independent features are highly correlated. 
+     It makes coefficient estimates unstable, inflates standard errors, and impedes 
+     interpreting the individual effect of each feature.
+
+Q14: What is Adjusted R-squared and why is it used?
+A14: Standard R2 always increases or stays the same when adding more features, even 
+     irrelevant ones. Adjusted R2 penalizes the addition of uninformative features:
+     Adjusted R^2 = 1 - [(1 - R^2)(n - 1) / (n - k - 1)], where k is feature count.
+
+Q15: What are the hyperparameters of RandomForestRegressor?
+A15: - `n_estimators`: Number of trees.
+     - `max_depth`: Maximum depth of each tree.
+     - `min_samples_split`: Minimum samples required to split an internal node.
+     - `min_samples_leaf`: Minimum samples required at a leaf node.
+     - `max_features`: Number of features to consider when looking for the best split.
+============================================================================
+"""

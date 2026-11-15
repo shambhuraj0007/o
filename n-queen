@@ -1,0 +1,245 @@
+import java.util.Scanner;
+
+/*
+ ============================================================================
+  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
+  ASSIGNMENT 5: N-QUEENS PROBLEM (BACKTRACKING STRATEGY)
+ ============================================================================
+
+ PROBLEM STATEMENT:
+ The N-Queens puzzle is the problem of placing N chess queens on an N x N 
+ chessboard such that no two queens threaten each other.
+ Thus, a solution requires that no two queens share the same row, column, 
+ or diagonal.
+
+ ALGORITHMIC STRATEGY: BACKTRACKING (DEPTH FIRST SEARCH WITH PRUNING)
+ - Place queens one by one in different rows, starting from row 0.
+ - Before placing a queen at board[row][col], check if the position is safe:
+     * Check if another queen exists in the same column (above).
+     * Check upper-left diagonal.
+     * Check upper-right diagonal.
+   (No need to check lower rows/diagonals since queens are placed sequentially from row 0 to N-1).
+ - If safe:
+     * Mark board[row][col] = 1 (Place queen).
+     * Recursively try placing queens in the next row (row + 1).
+     * If placement in subsequent rows leads to no valid solution, BACKTRACK:
+       reset board[row][col] = 0 and try the next column.
+ - Base Condition: When row == N, all N queens have been placed successfully.
+ ============================================================================
+*/
+
+public class NQueens {
+
+    static int n; // Board dimension (n x n) and number of queens
+
+    /**
+     * Bounding / Safety Function:
+     * Validates whether placing a queen at board[row][col] violates chess rules.
+     * 
+     * @param board current state of chessboard (1 represents queen, 0 is empty)
+     * @param row target row index
+     * @param col target column index
+     * @return true if position is safe from attack; false otherwise
+     */
+    static boolean isSafe(int[][] board, int row, int col) {
+
+        // 1. Check vertical column above the current row
+        for (int i = 0; i < row; i++) {
+            if (board[i][col] == 1)
+                return false;
+        }
+
+        // 2. Check upper-left diagonal (\ direction)
+        for (int i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--) {
+            if (board[i][j] == 1)
+                return false;
+        }
+
+        // 3. Check upper-right diagonal (/ direction)
+        for (int i = row - 1, j = col + 1; i >= 0 && j < n; i--, j++) {
+            if (board[i][j] == 1)
+                return false;
+        }
+
+        // Position is safe from all existing queens
+        return true;
+    }
+
+    /**
+     * Recursive Backtracking Function:
+     * Attempts to place a queen row by row.
+     * 
+     * @param board n x n chessboard matrix
+     * @param row current row index to place a queen
+     * @return true if all queens placed successfully; false if dead-end reached
+     */
+    static boolean solve(int[][] board, int row) {
+
+        // BASE CASE: All N queens are successfully placed on rows 0 to n-1
+        if (row == n)
+            return true;
+
+        // Try placing queen in all columns of the current row one by one
+        for (int col = 0; col < n; col++) {
+
+            // Check if column 'col' in 'row' is safe
+            if (isSafe(board, row, col)) {
+
+                // DO: Place queen at (row, col)
+                board[row][col] = 1;
+
+                // RECURSE: Move to next row
+                if (solve(board, row + 1))
+                    return true;
+
+                // UNDO (BACKTRACK): If placing queen here doesn't lead to solution, remove it
+                board[row][col] = 0;
+            }
+        }
+
+        // If queen cannot be placed in any column of this row, trigger backtracking
+        return false;
+    }
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of Queens (N): ");
+        n = sc.nextInt();
+
+        // Initialize empty N x N chessboard (all zeros)
+        int[][] board = new int[n][n];
+
+        // Start backtracking from row 0
+        if (solve(board, 0)) {
+
+            System.out.println("\nOne Valid Chessboard Solution (1 = Queen, 0 = Empty):");
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    System.out.print((board[i][j] == 1 ? " Q " : " . "));
+                }
+                System.out.println();
+            }
+
+        } else {
+            System.out.println("No solution exists for N = " + n);
+        }
+
+        sc.close();
+    }
+}
+
+/*
+ ============================================================================
+                         THEORY & ARCHITECTURE
+ ============================================================================
+
+ 1. WHAT IS BACKTRACKING?
+    Backtracking is an algorithmic technique for solving problems recursively 
+    by trying to build a solution incrementally, one piece at a time.
+    Whenever it determines that the current partial candidate cannot possibly 
+    lead to a valid complete solution, it abandons the candidate ("backtracks") 
+    by undoing the previous move and exploring the next alternative.
+
+ 2. BRUTE FORCE VS BACKTRACKING:
+    - Brute Force: Generates all possible configurations of placing N queens 
+      on an N x N board (N^N states or C(N^2, N) states) and checks each one.
+      For N = 8: 8^8 = 16,777,216 combinations!
+    - Backtracking: Prunes invalid subtrees immediately. If queen in row 1 
+      attacks queen in row 0, the entire branch is discarded without evaluating 
+      rows 2 to 7. Only 2,057 nodes are explored for N = 8!
+
+ 3. COMPLEXITY ANALYSIS:
+    - Time Complexity: O(N!) Upper Bound.
+      In row 0, there are N choices. In row 1, at most N - 2 safe choices. 
+      In row 2, at most N - 4 safe choices. 
+      Total work: N * (N - 2) * (N - 4) ... = O(N!).
+    - Auxiliary Space Complexity:
+      * 2D Matrix: O(N^2)
+      * Call Stack Depth: O(N) recursion stack frames.
+      * Overall auxiliary space: O(N^2).
+
+ 4. HOW TO OPTIMIZE `isSafe` FROM O(N) TO O(1)?
+    Instead of looping across columns and diagonals, use 3 boolean lookup arrays:
+    1. boolean[] cols = new boolean[N];
+       -> checks column conflict.
+    2. boolean[] mainDiag = new boolean[2 * N - 1];
+       -> checks '\' diagonal using index: (row - col + N - 1).
+    3. boolean[] antiDiag = new boolean[2 * N - 1];
+       -> checks '/' diagonal using index: (row + col).
+    This reduces the safety check from O(N) to O(1) time per cell.
+
+ ============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+ ============================================================================
+
+ Q1: What is the N-Queens problem?
+ A1: It is the challenge of placing N non-attacking queens on an N x N chessboard 
+     such that no two queens share the same row, column, or diagonal.
+
+ Q2: Which algorithmic design paradigm is used to solve N-Queens?
+ A2: Backtracking (Systematic exhaustive search via Depth First Search with pruning).
+
+ Q3: Why don't we need to check rows in `isSafe`?
+ A3: Because our recursive logic places exactly ONE queen per row sequentially 
+     (row + 1 at each recursion step). Hence, two queens can never be in the same row.
+
+ Q4: Why don't we check lower diagonals or rows below `row` in `isSafe`?
+ A4: Because queens are placed from top to bottom (row 0 to N-1). Rows below the 
+     current row are empty and contain no queens yet.
+
+ Q5: What is the time complexity of the N-Queens backtracking algorithm?
+ A5: O(N!) in the worst case, because the number of choices decreases by at least 
+     1 or 2 at each row level.
+
+ Q6: What is the space complexity of this program?
+ A6: O(N^2) for the chessboard matrix and O(N) for the recursive call stack depth.
+
+ Q7: For what values of N does NO solution exist?
+ A7: For N = 2 and N = 3, no solution exists. Solutions exist for N = 1 and all N >= 4.
+
+ Q8: How many total solutions exist for standard 8-Queens?
+ A8: There are 92 total solutions (representing 12 unique/fundamental solutions 
+     when rotational and reflectional symmetries are factored out).
+
+ Q9: What is a State-Space Tree?
+ A9: A tree representing all possible states explored by a backtracking algorithm. 
+     The root represents the empty board, level 1 represents positions of Queen 0, 
+     level 2 represents Queen 1, and so on.
+
+ Q10: What is a Bounding Function / Pruning?
+ A10: A bounding function checks whether a path in the state-space tree satisfies 
+      problem constraints (here `isSafe`). If constraints are violated, pruning kills 
+      the subtree immediately without further exploration.
+
+ Q11: How can the safety check be made O(1) constant time?
+ A11: By maintaining three boolean tracking arrays or bitmasks:
+      - `cols[col]`
+      - `slashDiagonal[row + col]`
+      - `backslashDiagonal[row - col + N - 1]`.
+
+ Q12: How can we modify the code to count and print ALL solutions instead of just one?
+ A12: In the base condition `if (row == n)`, print the board and increment a global 
+      counter, then return `false` (or don't return `true`) so the loop continues 
+      exploring other columns and branches.
+
+ Q13: Can N-Queens be solved in 1D array representation?
+ A13: Yes, an array `int[] board = new int[N]` where `board[i] = col` indicates a 
+      queen at row i and column col. Two queens at (r1, c1) and (r2, c2) conflict if:
+      c1 == c2 OR |r1 - r2| == |c1 - c2|.
+
+ Q14: What is the difference between Backtracking and Branch & Bound?
+ A14: - Backtracking uses Depth First Search (DFS) with a bounding function; 
+       well-suited for decision and constraint satisfaction problems.
+     - Branch and Bound uses Breadth First Search (BFS) or Best-First Search with 
+       a cost function; well-suited for optimization problems (e.g., Min/Max Cost).
+
+ Q15: What are practical real-world applications of N-Queens and Backtracking?
+ A15: - Constraint Satisfaction Problems (CSP)
+      - Circuit board VLSI routing and component placement
+      - Deadlock detection and avoidance in multiprocessing
+      - Automated flight and exam timetable scheduling
+      - Solving puzzles like Sudoku, Crosswords, and Cryptarithmetic.
+ ============================================================================
+*/

@@ -1,0 +1,224 @@
+"""
+============================================================================
+ LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
+ ASSIGNMENT 5: EMAIL SPAM CLASSIFICATION (NLP WITH KNN & SVM)
+============================================================================
+
+PROBLEM STATEMENT:
+Given a dataset of SMS/Email messages (spam.csv), classify messages into 
+'ham' (legitimate, non-spam = 0) or 'spam' (unwanted/fraudulent = 1). 
+Transform raw text into numerical features using TF-IDF Vectorization, train 
+K-Nearest Neighbors (KNN) and Support Vector Machine (SVM) classifiers, and 
+compare their classification accuracies.
+
+ALGORITHMIC PARADIGMS:
+- Natural Language Processing (NLP) & Text Mining.
+- Feature Extraction: TF-IDF (Term Frequency - Inverse Document Frequency).
+- K-Nearest Neighbors (KNN): Instance-based, non-parametric "lazy" learner.
+- Support Vector Machine (SVM): Maximum-margin linear classification hyperplane.
+============================================================================
+"""
+
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# ----------------- Step 1: Load Dataset -----------------
+# Ensure 'spam.csv' is present in the working directory (SMS Spam Collection)
+try:
+    df = pd.read_csv("spam.csv", encoding="latin-1")
+except FileNotFoundError:
+    print("Warning: 'spam.csv' not found. Creating synthetic demo data...")
+    df = pd.DataFrame({
+        "v1": ["ham", "spam", "ham", "spam", "ham", "spam", "ham", "ham", "spam", "ham"] * 20,
+        "v2": [
+            "Hey, are we still meeting for lunch today?",
+            "WINNER!! You have won a 1000 cash prize! Call 9876543210 now to claim.",
+            "Can you please review the attached document before tomorrow's meeting?",
+            "URGENT: Your account has been compromised. Verify your bank password here.",
+            "Let's catch up over coffee this weekend.",
+            "Free entry into a weekly lottery! Text WIN to 80085 to enter.",
+            "Don't forget to submit your lab practical assignments on Monday.",
+            "Happy Birthday! Hope you have a wonderful year ahead.",
+            "Congratulations! Claim your exclusive gift voucher code 5544 right away.",
+            "Please send me the lecture slides when you get home."
+        ] * 20
+    })
+
+# ----------------- Step 2: Preprocessing & Column Selection -----------------
+# Keep only relevant columns: 'v1' is category label, 'v2' is message body text
+df = df[["v1", "v2"]]
+
+# Rename columns to meaningful identifiers
+df.columns = ["label", "message"]
+
+# Encode binary labels: 'ham' (normal) -> 0, 'spam' -> 1
+df["label"] = df["label"].map({
+    "ham": 0,
+    "spam": 1
+})
+
+# ----------------- Step 3: Text Feature Extraction (TF-IDF) -----------------
+# Machine Learning models cannot process raw strings.
+# TfidfVectorizer performs:
+# 1. Tokenization (splitting sentences into words).
+# 2. Lowercasing.
+# 3. Stop-word removal (drops common non-informative words like 'is', 'the', 'at').
+# 4. TF-IDF calculation: penalizes ubiquitous words, boosts discriminative words.
+vectorizer = TfidfVectorizer(stop_words="english")
+
+# Transform text messages into a High-Dimensional Sparse CSR Matrix
+X = vectorizer.fit_transform(df["message"])
+y = df["label"]
+
+# ----------------- Step 4: Train-Test Split -----------------
+# 80% data for training the vector space models, 20% held out for evaluation
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# ----------------- Step 5: Model 1 - K-Nearest Neighbors (KNN) -----------------
+# Finds the 5 closest messages in TF-IDF space and takes majority label vote
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+p1 = knn.predict(X_test)
+
+# ----------------- Step 6: Model 2 - Support Vector Machine (SVM) -----------------
+# Finds the optimal maximum-margin hyperplane separating spam from ham
+svm = SVC(kernel="linear")
+svm.fit(X_train, y_train)
+
+p2 = svm.predict(X_test)
+
+# ----------------- Step 7: Accuracy & Performance Comparison -----------------
+print("=================== Spam Classification Results ===================")
+print("1. K-Nearest Neighbors (KNN, k=5) Accuracy:", round(accuracy_score(y_test, p1), 4))
+print("2. Support Vector Machine (Linear SVM) Accuracy:", round(accuracy_score(y_test, p2), 4))
+
+print("\n--- Detailed Classification Report (Linear SVM) ---")
+print(classification_report(y_test, p2, target_names=["Ham (0)", "Spam (1)"]))
+
+print("Confusion Matrix (Linear SVM):")
+print(confusion_matrix(y_test, p2))
+print("===================================================================")
+
+
+"""
+============================================================================
+                         THEORY & ARCHITECTURE
+============================================================================
+
+1. MATHEMATICS OF TF-IDF:
+   TF-IDF measures how relevant a word is to a document within a collection:
+   - Term Frequency (TF):
+     TF(t, d) = (Count of term t in document d) / (Total terms in document d)
+   - Inverse Document Frequency (IDF):
+     IDF(t, D) = log [ (1 + Total documents N) / (1 + Count of documents containing t) ] + 1
+   - TF-IDF Weight:
+     TF-IDF(t, d, D) = TF(t, d) * IDF(t, D)
+   Words like "free", "win", "prize" have high TF in spam documents and low 
+   document frequency overall, giving them strong discriminatory weights.
+
+2. WHY DOES LINEAR SVM OUTPERFORM KNN ON TEXT DATA?
+   - High Dimensionality: Text creates a sparse vector space with thousands of vocabulary words.
+   - Curse of Dimensionality: In high dimensions, all pairwise Euclidean distances 
+     become nearly uniform, rendering KNN's distance metric ineffective.
+   - Linear Separability: Text classification problems are almost always linearly 
+     separable because the feature space is vast. Linear SVM excels at finding the 
+     maximum-margin hyperplane in high dimensions with very low computational cost.
+
+3. SUPPORT VECTOR MACHINE (SVM) CONCEPTS:
+   - Hyperplane: Decision boundary w^T * x + b = 0 separating classes.
+   - Support Vectors: The critical data points closest to the hyperplane. 
+     Moving or removing other non-support vector data points has zero effect on the boundary.
+   - Margin: Distance between the hyperplane and the closest support vector (2 / ||w||).
+   - Maximum-Margin Classifier: Maximizes margin width to achieve robust generalization.
+
+============================================================================
+              COMPREHENSIVE VIVA QUESTIONS & ANSWERS (EXAM PREP)
+============================================================================
+
+Q1: What is the goal of this assignment?
+A1: To classify SMS/email messages as either legitimate ("ham") or fraudulent/promotional 
+    ("spam") by converting text into numerical vectors using TF-IDF and training KNN and SVM.
+
+Q2: What is the difference between Bag-of-Words (CountVectorizer) and TF-IDF?
+A2: CountVectorizer simply counts raw word occurrences. Common words like "meeting" 
+    receive high counts even if not distinctive. TF-IDF scales down words that appear 
+    in almost every document, highlighting unique, highly informative words.
+
+Q3: What are "Stop Words" and why are they eliminated during preprocessing?
+A3: Stop words are high-frequency words in a language (e.g., "is", "the", "at", "which") 
+    that carry little to no topical or semantic meaning for discriminating spam from ham. 
+    Removing them reduces dimensionality and speeds training.
+
+Q4: What is a Sparse Matrix and why is it used in NLP?
+A4: In a vocabulary of 10,000 unique words, any single short email uses only 20 to 50 words. 
+    The resulting row vector consists of over 99% zeros. A Compressed Sparse Row (CSR) 
+    matrix stores only non-zero values and their coordinates, saving gigabytes of RAM.
+
+Q5: Why is K-Nearest Neighbors (KNN) called a "Lazy Learner"?
+A5: KNN performs no explicit training phase. It simply stores the training instances in memory 
+    and defers all computation until inference time, when it calculates distances from 
+    the query sample to all stored samples.
+
+Q6: How does the Choice of K affect KNN?
+A6: - Very small K (e.g., K = 1): Sensitive to noise and outliers; causes overfitting 
+      (high variance).
+    - Very large K: Blurs boundaries by including samples from other classes; causes 
+      underfitting (high bias).
+    - An odd value of K is typically chosen for binary classification to avoid ties.
+
+Q7: What is the "Curse of Dimensionality"?
+A7: As the number of feature dimensions grows, the volume of the feature space increases 
+    exponentially, causing data points to become extremely sparse and equidistant. Distance 
+    metrics like Euclidean distance lose their meaning, degrading KNN performance.
+
+Q8: What are Support Vectors in SVM?
+A8: Support vectors are the training data points that lie closest to the decision boundary 
+    (hyperplane). They alone determine the orientation and position of the hyperplane.
+
+Q9: What is the "Kernel Trick" in SVM?
+A9: The kernel trick implicitly maps non-linearly separable data into a higher-dimensional 
+    feature space using inner products without explicitly computing the coordinates in 
+    that high-dimensional space (e.g., Linear, RBF, Polynomial, Sigmoid).
+
+Q10: Why is a Linear Kernel preferred for text classification instead of RBF?
+A10: Text feature vectors have thousands of dimensions (one per vocabulary token). 
+     Data in high-dimensional spaces is usually already linearly separable, so a Linear 
+     kernel provides superior speed, avoids overfitting, and matches or exceeds RBF accuracy.
+
+Q11: What is a Confusion Matrix?
+A11: A 2x2 performance evaluation table:
+     - True Positives (TP): Spam correctly identified as Spam.
+     - True Negatives (TN): Ham correctly identified as Ham.
+     - False Positives (FP): Legitimate ham incorrectly flagged as Spam (Type I error).
+     - False Negatives (FN): Spam missed and labeled as Ham (Type II error).
+
+Q12: In email spam filtering, which is more dangerous: False Positive or False Negative?
+A12: False Positives are significantly more dangerous. Flagging an important client email, 
+     job offer, or emergency message as spam and hiding it from the user is much worse 
+     than occasionally letting an annoying spam message slip into the inbox.
+
+Q13: Which evaluation metric reflects the cost of False Positives?
+A13: PRECISION = TP / (TP + FP). High precision means very few legitimate emails are 
+     mistakenly discarded as spam.
+
+Q14: What other classifiers are frequently used for text/spam classification?
+A14: - Naive Bayes (MultinomialNB, BernoulliNB) - probabilistic, fast, standard baseline.
+     - Logistic Regression.
+     - Transformer models (BERT, RoBERTa, DistilBERT) for state-of-the-art context-aware classification.
+
+Q15: What is Stemming and Lemmatization?
+A15: - Stemming: Heuristic rule-based truncation of word suffixes to root stems 
+       (e.g., "running", "runs" -> "run"; "studies" -> "studi").
+     - Lemmatization: Morphological vocabulary and grammatical analysis returning valid 
+       base dictionary words (e.g., "better" -> "good"; "studies" -> "study").
+============================================================================
+"""
