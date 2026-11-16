@@ -1,32 +1,6 @@
 import java.util.Scanner;
 
-/*
- ============================================================================
-  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
-  ASSIGNMENT 5: N-QUEENS PROBLEM (BACKTRACKING STRATEGY)
- ============================================================================
 
- PROBLEM STATEMENT:
- The N-Queens puzzle is the problem of placing N chess queens on an N x N 
- chessboard such that no two queens threaten each other.
- Thus, a solution requires that no two queens share the same row, column, 
- or diagonal.
-
- ALGORITHMIC STRATEGY: BACKTRACKING (DEPTH FIRST SEARCH WITH PRUNING)
- - Place queens one by one in different rows, starting from row 0.
- - Before placing a queen at board[row][col], check if the position is safe:
-     * Check if another queen exists in the same column (above).
-     * Check upper-left diagonal.
-     * Check upper-right diagonal.
-   (No need to check lower rows/diagonals since queens are placed sequentially from row 0 to N-1).
- - If safe:
-     * Mark board[row][col] = 1 (Place queen).
-     * Recursively try placing queens in the next row (row + 1).
-     * If placement in subsequent rows leads to no valid solution, BACKTRACK:
-       reset board[row][col] = 0 and try the next column.
- - Base Condition: When row == N, all N queens have been placed successfully.
- ============================================================================
-*/
 
 public class NQueens {
 
@@ -130,9 +104,50 @@ public class NQueens {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  ============================================================================
                          THEORY & ARCHITECTURE
+ ============================================================================
+
+
+
+ ALGORITHMIC STRATEGY: BACKTRACKING (DEPTH FIRST SEARCH WITH PRUNING)
+ - Place queens one by one in different rows, starting from row 0.
+ - Before placing a queen at board[row][col], check if the position is safe:
+     * Check if another queen exists in the same column (above).
+     * Check upper-left diagonal.
+     * Check upper-right diagonal.
+   (No need to check lower rows/diagonals since queens are placed sequentially from row 0 to N-1).
+ - If safe:
+     * Mark board[row][col] = 1 (Place queen).
+     * Recursively try placing queens in the next row (row + 1).
+     * If placement in subsequent rows leads to no valid solution, BACKTRACK:
+       reset board[row][col] = 0 and try the next column.
+ - Base Condition: When row == N, all N queens have been placed successfully.
  ============================================================================
 
  1. WHAT IS BACKTRACKING?

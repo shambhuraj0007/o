@@ -1,28 +1,7 @@
-"""
-============================================================================
- LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
- ASSIGNMENT 1: GRADIENT DESCENT OPTIMIZATION ALGORITHM
-============================================================================
 
-PROBLEM STATEMENT:
-Implement Gradient Descent algorithm to find the local minimum of a function 
-(e.g., y = x^2). Explore the impact of parameters like learning rate and 
-number of iterations on convergence.
 
-CORE CONCEPT:
-Gradient Descent is a first-order iterative optimization algorithm used to 
-find a local minimum of a differentiable objective function. It calculates the 
-gradient (derivative) of the function at the current point and moves in the 
-direction of the steepest descent (opposite to the gradient).
 
-UPDATE FORMULA:
-    x_new = x_old - (learning_rate * f'(x_old))
-    where:
-      - x_old is the current position.
-      - f'(x_old) is the first derivative (gradient) indicating slope.
-      - learning_rate (alpha) controls the step size taken per iteration.
-============================================================================
-"""
+
 
 # Objective Function to minimize: f(x) = x^2
 def function(x):
@@ -66,7 +45,52 @@ print("Local Minimum Point (x):", x)
 print("Minimum Value (f(x)):   ", function(x))
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 """
+
+
+
+
+
+
+
+CORE CONCEPT:
+Gradient Descent is a first-order iterative optimization algorithm used to 
+find a local minimum of a differentiable objective function. It calculates the 
+gradient (derivative) of the function at the current point and moves in the 
+direction of the steepest descent (opposite to the gradient).
+
+UPDATE FORMULA:
+    x_new = x_old - (learning_rate * f'(x_old))
+    where:
+      - x_old is the current position.
+      - f'(x_old) is the first derivative (gradient) indicating slope.
+      - learning_rate (alpha) controls the step size taken per iteration.
 ============================================================================
                          THEORY & ARCHITECTURE
 ============================================================================

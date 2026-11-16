@@ -1,23 +1,4 @@
-"""
-============================================================================
- LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
- ASSIGNMENT 3: UBER FARE PREDICTION (REGRESSION ANALYSIS)
-============================================================================
 
-PROBLEM STATEMENT:
-Predict Uber ride fare amount using historical ride data (GPS pickup/dropoff 
-coordinates, passenger count). Apply Linear Regression and Random Forest 
-Regressor, and compare their performance using evaluation metrics: 
-R-squared (R2) and Root Mean Squared Error (RMSE).
-
-ALGORITHMIC PARADIGMS:
-- Supervised Learning - Regression: Target variable 'fare_amount' is continuous.
-- Linear Regression: Parametric model finding the best-fit hyperplane via 
-  Ordinary Least Squares (OLS).
-- Random Forest Regressor: Non-parametric ensemble learning technique using 
-  Bootstrap Aggregating (Bagging) on multiple decision trees.
-============================================================================
-"""
 
 import pandas as pd
 import numpy as np
@@ -102,7 +83,51 @@ print("   RMSE (Root Mean Squared Error):", round(np.sqrt(mean_squared_error(y_t
 print("========================================================")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 """
+
+
+
+
+ALGORITHMIC PARADIGMS:
+- Supervised Learning - Regression: Target variable 'fare_amount' is continuous.
+- Linear Regression: Parametric model finding the best-fit hyperplane via 
+  Ordinary Least Squares (OLS).
+- Random Forest Regressor: Non-parametric ensemble learning technique using 
+  Bootstrap Aggregating (Bagging) on multiple decision trees.
+============================================================================
 ============================================================================
                          THEORY & ARCHITECTURE
 ============================================================================

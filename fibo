@@ -1,22 +1,6 @@
 import java.util.Scanner;
 
-/*
- ============================================================================
-  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
-  ASSIGNMENT 1: FIBONACCI NUMBERS (RECURSIVE & NON-RECURSIVE / ITERATIVE)
- ============================================================================
- 
- PROBLEM STATEMENT:
- Write a program to calculate Fibonacci numbers and analyze their time 
- and space complexity for both Recursive and Non-Recursive (Iterative) methods.
 
- DEFINITION:
- The Fibonacci sequence is a series of numbers where each number is the sum 
- of the two preceding ones, starting from 0 and 1:
- F(0) = 0, F(1) = 1, and F(n) = F(n-1) + F(n-2) for n >= 2.
- Sequence: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, ...
- ============================================================================
-*/
 
 public class Fibonacci {
 
@@ -88,6 +72,23 @@ public class Fibonacci {
         sc.close();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
  ============================================================================

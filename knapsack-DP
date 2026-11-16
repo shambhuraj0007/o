@@ -1,26 +1,4 @@
-/*
- ============================================================================
-  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
-  ASSIGNMENT 3: 0/1 KNAPSACK PROBLEM (DYNAMIC PROGRAMMING)
- ============================================================================
 
- PROBLEM STATEMENT:
- Given n items with weights and profits, and a knapsack of capacity W, determine 
- the maximum profit subset of items such that the sum of their weights does not 
- exceed W. Each item can either be taken once (1) or left behind (0). Fractional 
- parts are NOT allowed.
-
- ALGORITHMIC STRATEGY: DYNAMIC PROGRAMMING (BOTTOM-UP TABULATION)
- - Build a 2D table dp[n + 1][capacity + 1].
- - dp[i][w] represents the maximum profit obtainable considering the first i items 
-   with maximum allowable knapsack capacity w.
- - Recurrence Relation:
-     If weight[i - 1] <= w:
-         dp[i][w] = max(profit[i - 1] + dp[i - 1][w - weight[i - 1]], dp[i - 1][w])
-     Else:
-         dp[i][w] = dp[i - 1][w]
- ============================================================================
-*/
 
 public class Knapsack {
 
@@ -90,10 +68,53 @@ public class Knapsack {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  ============================================================================
                          THEORY & ARCHITECTURE
  ============================================================================
+
+
+ 
+ ALGORITHMIC STRATEGY: DYNAMIC PROGRAMMING (BOTTOM-UP TABULATION)
+ - Build a 2D table dp[n + 1][capacity + 1].
+ - dp[i][w] represents the maximum profit obtainable considering the first i items 
+   with maximum allowable knapsack capacity w.
+ - Recurrence Relation:
+     If weight[i - 1] <= w:
+         dp[i][w] = max(profit[i - 1] + dp[i - 1][w - weight[i - 1]], dp[i - 1][w])
+     Else:
+         dp[i][w] = dp[i - 1][w]
 
  1. DYNAMIC PROGRAMMING PRINCIPLES IN 0/1 KNAPSACK:
     Dynamic programming is applicable when a problem has:

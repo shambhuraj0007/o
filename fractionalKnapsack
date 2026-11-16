@@ -1,27 +1,6 @@
 import java.util.*;
 
-/*
- ============================================================================
-  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
-  ASSIGNMENT 2: FRACTIONAL KNAPSACK PROBLEM (GREEDY STRATEGY)
- ============================================================================
 
- PROBLEM STATEMENT:
- Given weights and profits of n items, put these items in a knapsack of capacity 
- W to get the maximum total value in the knapsack. In Fractional Knapsack, we can 
- break items for maximizing the total value of the knapsack.
-
- ALGORITHMIC STRATEGY: GREEDY METHOD
- - Calculate profit-to-weight ratio (profit / weight) for each item.
- - Sort all items in descending order of their profit-to-weight ratio.
- - Greedily pick items with the highest ratio first:
-     * If the whole item fits within remaining capacity, take it entirely.
-     * If the item cannot fit completely, take a fraction equal to:
-       (remaining_capacity / item.weight) * item.profit
- ============================================================================
-*/
-
-// Representation of an item with weight and profit
 class Item {
     int weight; // Weight of the item
     int profit; // Value / Profit of the item
@@ -92,6 +71,37 @@ public class FractionalKnapsack {
         System.out.println("\nMaximum Profit in Knapsack: " + totalProfit);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
  ============================================================================

@@ -1,21 +1,4 @@
 """
-============================================================================
- LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
- ASSIGNMENT 4: BANK CUSTOMER CHURN PREDICTION USING ARTIFICIAL NEURAL NETWORK
-============================================================================
-
-PROBLEM STATEMENT:
-Given bank customer demographic and transactional records (Churn_Modelling.csv), 
-build and train an Artificial Neural Network (Multilayer Perceptron - MLPClassifier) 
-to classify whether a customer will churn/exit the bank (Exited = 1) or stay (Exited = 0).
-
-ALGORITHMIC PARADIGMS:
-- Supervised Learning - Binary Classification.
-- Deep Learning / Neural Networks: Multilayer Perceptron (MLP).
-- Optimization: Backpropagation with gradient descent optimization (Adam optimizer).
-- Non-linear Activation Functions: ReLU (hidden layers), Logistic Sigmoid (output).
-============================================================================
-"""
 
 import pandas as pd
 import numpy as np
@@ -110,6 +93,32 @@ print(confusion_matrix(y_test, pred))
 print("\nClassification Report:")
 print(classification_report(y_test, pred))
 print("=====================================================")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 """

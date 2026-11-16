@@ -1,29 +1,6 @@
 import java.util.*;
 
-/*
- ============================================================================
-  LAB PRACTICE III (LP-3) - DESIGN AND ANALYSIS OF ALGORITHMS (DAA)
-  ASSIGNMENT 4: HUFFMAN CODING (GREEDY STRATEGY)
- ============================================================================
 
- PROBLEM STATEMENT:
- Implement Huffman Coding, a lossless data compression algorithm. 
- Assign variable-length binary codes to input characters such that the most 
- frequent characters receive the shortest codes and least frequent characters 
- receive the longest codes.
-
- ALGORITHMIC STRATEGY: GREEDY ALGORITHM
- - Create a leaf node for each unique character with its frequency.
- - Insert all nodes into a Min-Priority Queue (Min-Heap) keyed by frequency.
- - While more than one node exists in the priority queue:
-     1. Extract the two nodes with the lowest frequencies (left and right).
-     2. Create a new internal node with frequency equal to the sum of both.
-     3. Assign the first extracted node as left child ('0') and second as right child ('1').
-     4. Insert the new internal node back into the priority queue.
- - The remaining single node in the priority queue is the Root of the Huffman Tree.
- - Traverse the tree from root to leaf to generate prefix codes.
- ============================================================================
-*/
 
 // Node structure representing each character or internal frequency sum
 class Node {
@@ -122,9 +99,49 @@ public class Huffman {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  ============================================================================
                          THEORY & ARCHITECTURE
+ ============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ ALGORITHMIC STRATEGY: GREEDY ALGORITHM
+ - Create a leaf node for each unique character with its frequency.
+ - Insert all nodes into a Min-Priority Queue (Min-Heap) keyed by frequency.
+ - While more than one node exists in the priority queue:
+     1. Extract the two nodes with the lowest frequencies (left and right).
+     2. Create a new internal node with frequency equal to the sum of both.
+     3. Assign the first extracted node as left child ('0') and second as right child ('1').
+     4. Insert the new internal node back into the priority queue.
+ - The remaining single node in the priority queue is the Root of the Huffman Tree.
+ - Traverse the tree from root to leaf to generate prefix codes.
  ============================================================================
 
  1. WHAT IS HUFFMAN CODING?

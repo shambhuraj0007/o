@@ -1,25 +1,7 @@
-// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.20;
 
-/*
- ============================================================================
-  LAB PRACTICE III (LP-3) - BLOCKCHAIN TECHNOLOGY
-  ASSIGNMENT 7 (B-2): BANK ACCOUNT MANAGEMENT SMART CONTRACT
- ============================================================================
 
- PROBLEM STATEMENT:
- Implement a Bank Account smart contract on Ethereum using Solidity. 
- The contract should enable users to deposit Ether, withdraw specified 
- amounts with balance verification, and view account balance.
-
- CORE CONCEPTS:
- - Payable Functions & Ether transactions (Wei, Gwei, Ether).
- - Global variables: `msg.sender` and `msg.value`.
- - Error handling and precondition checks using `require()`.
- - Ether transfer mechanics: `transfer()`, `send()`, and `call()`.
- - Checks-Effects-Interactions (CEI) design pattern to prevent Reentrancy attacks.
- ============================================================================
-*/
 
 contract Bank {
 
@@ -86,6 +68,19 @@ contract Bank {
         return address(this).balance;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
  ============================================================================

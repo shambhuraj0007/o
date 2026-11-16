@@ -1,24 +1,4 @@
-"""
-============================================================================
- LAB PRACTICE III (LP-3) - MACHINE LEARNING (ML)
- ASSIGNMENT 2: K-MEANS & HIERARCHICAL CLUSTERING (UNSUPERVISED LEARNING)
-============================================================================
 
-PROBLEM STATEMENT:
-Given a dataset (sales_data_sample.csv), perform data preprocessing, determine 
-the optimal number of clusters using the Elbow Method (WCSS/Inertia), and apply 
-both K-Means Clustering and Hierarchical (Agglomerative) Clustering. Compare 
-and interpret the results.
-
-CORE CONCEPTS:
-- Unsupervised Learning: Finding hidden patterns or groupings in unlabeled data.
-- K-Means Clustering: A centroid-based partitioning algorithm that divides data 
-  into K non-overlapping subgroups by minimizing the Within-Cluster Sum of 
-  Squares (WCSS / Inertia).
-- Hierarchical Clustering: Creates a tree-like hierarchy of clusters 
-  (Dendrogram) using a bottom-up (Agglomerative) or top-down (Divisive) approach.
-============================================================================
-"""
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -98,7 +78,30 @@ print("Cluster Assignments (First 20 samples):")
 print(hierarchical_result[:20])
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 """
+
+
+
 ============================================================================
                          THEORY & ARCHITECTURE
 ============================================================================
